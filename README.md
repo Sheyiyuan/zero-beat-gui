@@ -105,7 +105,7 @@ TUI（zero） ── 同一把 instance.lock ── GUI（Flutter）
 | `app`（搜索、解析、歌词、歌单、登录、下载） | 播放引擎（media_kit） | `sync`：git CLI / go-git 双后端 |
 | `source` / `source/bilibili` / `netease` | Android 通知/锁屏（audio_service） | 下载完成处理器：桌面 ffmpeg / Android libav |
 | `player.Controller`（队列、模式、预取、重试） | 桌面托盘、小窗、窗口管理 | 本地文件夹歌单（Android SAF） |
-| `sync` / `library` / `lyrics` | 设置、主题、GUI 常用快捷键、登录二维码展示 | MPRIS（Linux）/ SMTC（Windows）/ Now Playing（macOS） |
+| `sync` / `library` / `lyrics` | 设置、主题、GUI 常用快捷键、登录二维码与本机网页登录 | MPRIS（Linux）/ SMTC（Windows）/ Now Playing（macOS） |
 | `sysmedia`（Linux MPRIS）、`instance`（flock / LockFileEx） | macOS 非沙盒 entitlement 与公证 | macOS 关闭沙盒 |
 
 ## 本地测试与当前边界

@@ -75,8 +75,13 @@ class SongTile extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: context.zero.text,
-                                  fontSize: 14,
+                                  color: current
+                                      ? context.zero.accent
+                                      : context.zero.text,
+                                  fontSize: 15,
+                                  fontWeight: current
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 2),

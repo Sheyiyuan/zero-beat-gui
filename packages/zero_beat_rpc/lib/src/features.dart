@@ -41,6 +41,22 @@ extension CoreFeatures on CoreApi {
     await _request('auth.logout', {'source': source});
   }
 
+  /// Hands the official page's session cookies to the core. The result is only
+  /// the public account name; callers must drop the cookie map after the call.
+  Future<({bool loggedIn, String name})> commitWebLogin(
+    String source,
+    Map<String, String> cookies,
+  ) async {
+    final raw = await _request('auth.web.commit', {
+      'source': source,
+      'cookies': Map<String, String>.from(cookies),
+    });
+    return (
+      loggedIn: raw['logged_in'] == true,
+      name: raw['name']?.toString() ?? '',
+    );
+  }
+
   Future<CommentPage> comments(TrackRef ref, int page) async =>
       CommentPage.fromJson(
         await _request('content.comments', {'ref': ref.toJson(), 'page': page}),

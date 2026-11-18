@@ -59,34 +59,44 @@ class _MobileShellState extends State<MobileShell> {
             ],
           ),
         ),
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Divider(height: 1),
-            PlayerBar(
-              compact: true,
-              onOpen: _openPlayer,
-              onQueue: () => showQueueSheet(context),
-            ),
-            NavigationBar(
-              selectedIndex: _tab,
-              onDestinationSelected: (index) => setState(() => _tab = index),
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.library_music_outlined),
-                  label: '曲库',
+        bottomNavigationBar: Material(
+          color: context.zero.surface,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: Material(
+                  color: context.zero.surfaceMuted,
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child: PlayerBar(
+                    compact: true,
+                    onOpen: _openPlayer,
+                    onQueue: () => showQueueSheet(context),
+                  ),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.explore_outlined),
-                  label: '发现',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  label: '我的',
-                ),
-              ],
-            ),
-          ],
+              ),
+              NavigationBar(
+                selectedIndex: _tab,
+                onDestinationSelected: (index) => setState(() => _tab = index),
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.library_music_outlined),
+                    label: '曲库',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.explore_outlined),
+                    label: '发现',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.person_outline),
+                    label: '我的',
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

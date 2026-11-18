@@ -269,10 +269,21 @@ class _DesktopFrame extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+            child: Text(
+              '零拍',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: context.zero.text,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text(
               '曲库',
-              style: TextStyle(fontSize: 18, color: context.zero.text),
+              style: TextStyle(fontSize: 13, color: context.zero.muted),
             ),
           ),
           Wrap(

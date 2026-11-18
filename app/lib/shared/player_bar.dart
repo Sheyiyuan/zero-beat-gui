@@ -252,7 +252,7 @@ class CoverArt extends StatelessWidget {
     final remote =
         uri != null && (uri.isScheme('http') || uri.isScheme('https'));
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(size >= 160 ? 20 : 10),
       child: SizedBox(
         width: size,
         height: size,
@@ -284,18 +284,25 @@ class NowPlayingBody extends ConsumerWidget {
     final view = ref.watch(playerProvider);
     final song = view.snapshot.current;
     final transport = ref.read(transportProvider);
+    final width = MediaQuery.sizeOf(context).width;
+    final cover = (width - 80).clamp(180.0, 320.0);
     return ListView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
       children: [
-        Text('正在播放', style: TextStyle(fontSize: 13, color: context.zero.muted)),
-        SizedBox(height: 16),
-        Center(child: CoverArt(cover: song?.cover ?? '', size: 220)),
-        SizedBox(height: 24),
+        Center(
+          child: CoverArt(cover: song?.cover ?? '', size: cover),
+        ),
+        const SizedBox(height: 28),
         Text(
           song?.title.isNotEmpty == true ? song!.title : '未在播放',
-          style: TextStyle(fontSize: 28, color: context.zero.text),
+          style: TextStyle(
+            fontSize: 26,
+            height: 1.2,
+            fontWeight: FontWeight.w700,
+            color: context.zero.text,
+          ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           song?.artist ?? '',
           style: TextStyle(fontSize: 16, color: context.zero.muted),
@@ -325,7 +332,7 @@ class NowPlayingBody extends ConsumerWidget {
               SongActions(song: song),
             ],
           ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         PlayerNotices(),
         SeekBar(
           positionMs: view.snapshot.positionMs,
@@ -337,18 +344,43 @@ class NowPlayingBody extends ConsumerWidget {
           children: [
             IconButton(
               tooltip: '上一首',
+              iconSize: 32,
               onPressed: transport.previous,
-              icon: Icon(Icons.skip_previous),
+              icon: const Icon(Icons.skip_previous),
             ),
-            PlayPauseButton(),
+            const PlayPauseButton(),
             IconButton(
               tooltip: '下一首',
+              iconSize: 32,
               onPressed: transport.next,
-              icon: Icon(Icons.skip_next),
+              icon: const Icon(Icons.skip_next),
             ),
           ],
         ),
+        const SizedBox(height: 4),
+        Center(child: _ModeButton(mode: view.snapshot.mode.value)),
       ],
+    );
+  }
+}
+
+class _ModeButton extends ConsumerWidget {
+  const _ModeButton({required this.mode});
+  final String mode;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (icon, label, next) = switch (mode) {
+      'list_loop' => (Icons.repeat, '列表循环', 'loop_one'),
+      'loop_one' => (Icons.repeat_one, '单曲循环', 'shuffle'),
+      'shuffle' => (Icons.shuffle, '随机播放', 'ordered'),
+      _ => (Icons.playlist_play, '顺序播放', 'list_loop'),
+    };
+    return TextButton.icon(
+      key: const Key('playback-mode'),
+      onPressed: () => ref.read(transportProvider).setPlaybackMode(next),
+      icon: Icon(icon, color: context.zero.accent),
+      label: Text(label),
     );
   }
 }

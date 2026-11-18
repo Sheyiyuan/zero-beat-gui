@@ -73,6 +73,8 @@ class FeatureApi extends FakeCoreApi implements CoreFeatureTransport {
         return {};
       case 'auth.accounts':
         return {'sources': <Object>[]};
+      case 'auth.web.commit':
+        return {'logged_in': true, 'name': '园'};
       case 'browse.roots':
         return {'entries': <Object>[]};
       case 'content.comments':
