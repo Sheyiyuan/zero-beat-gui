@@ -3,6 +3,8 @@ import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 
 String sourceLabel(SourceID source) => _sourceName(source.value);
 
+String sourceShortLabel(SourceID source) => _sourceShort(source.value);
+
 String accountLabel(String id) => _sourceName(id);
 
 String _sourceName(String id) {
@@ -12,6 +14,30 @@ String _sourceName(String id) {
     'local' => '本机',
     _ => id,
   };
+}
+
+String _sourceShort(String id) {
+  return switch (id) {
+    'bilibili' => '哔站',
+    'netease' => '网易',
+    'local' => '本机',
+    _ => id,
+  };
+}
+
+String formatClipRangeLabel(int startMs, int endMs) {
+  final start = formatClock(startMs);
+  if (endMs <= 0) return '片段 $start–结尾';
+  return '片段 $start–${formatClock(endMs)}';
+}
+
+String? playbackClipSubtitle({
+  required int clipStartMs,
+  required int clipEndMs,
+  required int positionMs,
+}) {
+  if (clipStartMs <= 0 && clipEndMs <= 0) return null;
+  return '${formatClipRangeLabel(clipStartMs, clipEndMs)} · 原曲 ${formatClock(positionMs)}';
 }
 
 String formatClock(int ms) {

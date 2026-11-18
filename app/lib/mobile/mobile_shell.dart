@@ -64,18 +64,11 @@ class _MobileShellState extends State<MobileShell> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: Material(
-                  color: context.zero.surfaceMuted,
-                  borderRadius: BorderRadius.circular(16),
-                  clipBehavior: Clip.antiAlias,
-                  child: PlayerBar(
-                    compact: true,
-                    onOpen: _openPlayer,
-                    onQueue: () => showQueueSheet(context),
-                  ),
-                ),
+              Divider(height: 1, thickness: 1, color: context.zero.line),
+              PlayerBar(
+                compact: true,
+                onOpen: _openPlayer,
+                onQueue: () => showQueueSheet(context),
               ),
               NavigationBar(
                 selectedIndex: _tab,

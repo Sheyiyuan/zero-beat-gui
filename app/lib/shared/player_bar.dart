@@ -126,6 +126,17 @@ class PlayerBar extends ConsumerWidget {
     final song = view.snapshot.current;
     final title = song?.title.isNotEmpty == true ? song!.title : '未在播放';
     final artist = song?.artist ?? '';
+    final host = ref.watch(playbackHostProvider);
+    final clipLine =
+        song != null &&
+            host != null &&
+            (host.activeClipStartMs > 0 || host.activeClipEndMs > 0)
+        ? playbackClipSubtitle(
+            clipStartMs: host.activeClipStartMs,
+            clipEndMs: host.activeClipEndMs,
+            positionMs: view.snapshot.positionMs,
+          )
+        : null;
     final transport = ref.read(transportProvider);
     final titleButton = InkWell(
       key: Key('open-player'),
@@ -140,7 +151,14 @@ class PlayerBar extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 14),
           ),
-          if (artist.isNotEmpty)
+          if (clipLine != null)
+            Text(
+              clipLine,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: context.zero.accent, fontSize: 12),
+            )
+          else if (artist.isNotEmpty)
             Text(
               artist,
               maxLines: 1,
@@ -283,6 +301,17 @@ class NowPlayingBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(playerProvider);
     final song = view.snapshot.current;
+    final host = ref.watch(playbackHostProvider);
+    final clipLine =
+        song != null &&
+            host != null &&
+            (host.activeClipStartMs > 0 || host.activeClipEndMs > 0)
+        ? playbackClipSubtitle(
+            clipStartMs: host.activeClipStartMs,
+            clipEndMs: host.activeClipEndMs,
+            positionMs: view.snapshot.positionMs,
+          )
+        : null;
     final transport = ref.read(transportProvider);
     final width = MediaQuery.sizeOf(context).width;
     final cover = (width - 80).clamp(180.0, 320.0);
@@ -307,6 +336,13 @@ class NowPlayingBody extends ConsumerWidget {
           song?.artist ?? '',
           style: TextStyle(fontSize: 16, color: context.zero.muted),
         ),
+        if (clipLine != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            clipLine,
+            style: TextStyle(color: context.zero.accent, fontSize: 14),
+          ),
+        ],
         if (song != null)
           Wrap(
             spacing: 8,

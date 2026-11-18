@@ -1,4 +1,5 @@
 import '../app/chrome.dart';
+import '../app/providers.dart';
 import '../app/theme.dart';
 import '../features/library_actions.dart';
 import '../features/navigation.dart';
@@ -7,7 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_core/zero_beat_core.dart' hide Clip;
 import '../features/session.dart';
 import '../shared/library_pane.dart';
+import '../shared/playback.dart';
+import '../shared/player_bar.dart';
 import '../shared/song_tile.dart';
+import 'full_player_page.dart';
 
 /// A real nested route preserves the playlist list and its scroll offset.
 class MobileLibraryPage extends ConsumerWidget {
@@ -32,6 +36,10 @@ class MobileLibraryPage extends ConsumerWidget {
         ],
       );
     }
+    final player = ref.watch(playerProvider).snapshot;
+    final current = player.current;
+    final hasPlayback =
+        current != null && player.state != PlaybackStatus.valueIdle;
     return Column(
       children: [
         Padding(
@@ -39,10 +47,7 @@ class MobileLibraryPage extends ConsumerWidget {
           child: Row(
             children: [
               const Expanded(
-                child: PageHeader(
-                  title: '曲库',
-                  subtitle: '最近使用的歌单、本机内容和已导入的平台歌单。',
-                ),
+                child: PageHeader(title: '曲库', subtitle: '歌单、本机与平台导入内容。'),
               ),
               IconButton(
                 tooltip: '搜索本地曲库',
@@ -57,23 +62,36 @@ class MobileLibraryPage extends ConsumerWidget {
         Expanded(
           child: ListView.builder(
             key: const PageStorageKey('mobile-playlists'),
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            itemCount: library.playlists.length,
+            padding: EdgeInsets.fromLTRB(0, 0, 0, hasPlayback ? 8 : 16),
+            itemCount: library.playlists.length + (hasPlayback ? 1 : 0),
             itemBuilder: (context, index) {
-              final playlist = library.playlists[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Material(
-                  color: context.zero.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  clipBehavior: Clip.antiAlias,
-                  child: ListTile(
-                    title: Text(playlist.title),
-                    subtitle: Text(_playlistMeta(playlist)),
-                    leading: CircleAvatar(
-                      backgroundColor: context.zero.accentSoft,
-                      foregroundColor: context.zero.accent,
-                      child: const Icon(Icons.queue_music),
+              if (hasPlayback && index == 0) {
+                return _ContinuePlaybackRow(song: current);
+              }
+              final playlistIndex = hasPlayback ? index - 1 : index;
+              final playlist = library.playlists[playlistIndex];
+              final last = playlistIndex == library.playlists.length - 1;
+              return Column(
+                children: [
+                  if (hasPlayback || playlistIndex > 0)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      indent: 20,
+                      endIndent: 20,
+                      color: context.zero.line,
+                    ),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                    title: Text(
+                      playlist.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      _playlistMeta(playlist),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
@@ -88,9 +106,22 @@ class MobileLibraryPage extends ConsumerWidget {
                         playlist.title,
                         Column(
                           children: [
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: LibraryTools(playlist: playlist),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _playlistMeta(playlist),
+                                      style: TextStyle(
+                                        color: context.zero.muted,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  LibraryTools(playlist: playlist),
+                                ],
+                              ),
                             ),
                             const Expanded(child: LibraryPane(tapToPlay: true)),
                           ],
@@ -98,12 +129,79 @@ class MobileLibraryPage extends ConsumerWidget {
                       );
                     },
                   ),
-                ),
+                  if (last && !hasPlayback) const SizedBox(height: 8),
+                ],
               );
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ContinuePlaybackRow extends ConsumerWidget {
+  const _ContinuePlaybackRow({required this.song});
+  final Song song;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final view = ref.watch(playerProvider);
+    final host = ref.watch(playbackHostProvider);
+    final clip =
+        host != null && (host.activeClipStartMs > 0 || host.activeClipEndMs > 0)
+        ? playbackClipSubtitle(
+            clipStartMs: host.activeClipStartMs,
+            clipEndMs: host.activeClipEndMs,
+            positionMs: view.snapshot.positionMs,
+          )
+        : null;
+    final subtitle =
+        clip ?? '${song.artist} · ${sourceShortLabel(song.source)}';
+    final playing = isPlaying(view);
+    return Material(
+      color: context.zero.accentSoft,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        leading: CoverArt(cover: song.cover, size: 44),
+        title: Text(
+          '继续播放',
+          style: TextStyle(fontSize: 12, color: context.zero.muted),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              song.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: context.zero.text,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: clip != null ? context.zero.accent : context.zero.muted,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+        trailing: IconButton(
+          tooltip: playing ? '暂停' : '播放',
+          onPressed: () => ref.read(transportProvider).toggle(),
+          icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_fill),
+          color: context.zero.accent,
+        ),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (context) => const FullPlayerPage()),
+        ),
+      ),
     );
   }
 }

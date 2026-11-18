@@ -132,6 +132,25 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.tapToPlay && library.songs.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton(
+                onPressed: busy
+                    ? null
+                    : () => ref
+                          .read(transportProvider)
+                          .playPlaylistSong(
+                            library.songs.first,
+                            library.selectedPlaylistId!,
+                            library.songs,
+                          ),
+                child: const Text('播放全部'),
+              ),
+            ),
+          ),
         Wrap(
           spacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -218,37 +237,51 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                 );
               }
               final song = library.songs[index];
-              return Row(
+              final last =
+                  index == library.songs.length - 1 && !library.hasMore;
+              return Column(
                 children: [
-                  if (selecting)
-                    Checkbox(
-                      value: all || selected.contains(song.id),
-                      onChanged: busy ? null : (_) => _toggle(song),
-                    ),
-                  Expanded(
-                    child: SongTile(
-                      song: song,
-                      doubleTapToPlay: !widget.tapToPlay,
-                      current: current == song.id,
-                      selected: selecting
-                          ? all || selected.contains(song.id)
-                          : song.id == library.selectedSongId,
-                      onLongPress: () => _toggle(song),
-                      onTap: () {
-                        if (selecting) {
-                          _toggle(song);
-                        } else if (widget.tapToPlay) {
-                          _play(song, library);
-                        } else {
-                          ref
-                              .read(libraryProvider.notifier)
-                              .selectSong(song.id);
-                        }
-                      },
-                      onPlay: () => _play(song, library),
-                      trailing: SongActions(song: song),
-                    ),
+                  Row(
+                    children: [
+                      if (selecting)
+                        Checkbox(
+                          value: all || selected.contains(song.id),
+                          onChanged: busy ? null : (_) => _toggle(song),
+                        ),
+                      Expanded(
+                        child: SongTile(
+                          song: song,
+                          doubleTapToPlay: !widget.tapToPlay,
+                          current: current == song.id,
+                          selected: selecting
+                              ? all || selected.contains(song.id)
+                              : song.id == library.selectedSongId,
+                          onLongPress: () => _toggle(song),
+                          onTap: () {
+                            if (selecting) {
+                              _toggle(song);
+                            } else if (widget.tapToPlay) {
+                              _play(song, library);
+                            } else {
+                              ref
+                                  .read(libraryProvider.notifier)
+                                  .selectSong(song.id);
+                            }
+                          },
+                          onPlay: () => _play(song, library),
+                          trailing: SongActions(song: song),
+                        ),
+                      ),
+                    ],
                   ),
+                  if (!last)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      indent: 16,
+                      endIndent: 16,
+                      color: context.zero.line,
+                    ),
                 ],
               );
             },

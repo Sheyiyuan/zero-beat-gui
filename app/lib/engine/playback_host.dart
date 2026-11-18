@@ -89,6 +89,10 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
 
   String get loudnormNotice => _loudnormNotice;
 
+  int get activeClipStartMs => _binding?.request.stream.clipStartMs ?? 0;
+
+  int get activeClipEndMs => _binding?.clipEndMs ?? 0;
+
   /// Optional sink for position, state, ended, and failed reports.
   void Function(HostEvent event)? onEvent;
 

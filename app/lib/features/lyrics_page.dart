@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
+import '../shared/playback.dart';
 import 'session.dart';
 import 'navigation.dart';
 
@@ -472,13 +474,22 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
 
   Future<void> _act(String action) async {
     if (busy || invalidated || token.isEmpty) return;
+    final issue = _validationIssue(_durationSeconds(ref));
+    if (issue != null && (action == 'save' || action == 'preview')) {
+      return;
+    }
     setState(() => busy = true);
     await perform(context, () async {
       final a = double.tryParse(start.text);
-      final b = end.text.trim().isEmpty ? 0 : double.tryParse(end.text);
-      if (a == null || b == null || !a.isFinite || !b.isFinite) {
+      if (a == null || !a.isFinite) {
         throw const FormatException('请输入有效秒数');
       }
+      final endText = end.text.trim();
+      final parsedEnd = endText.isEmpty ? null : double.tryParse(endText);
+      if (endText.isNotEmpty && (parsedEnd == null || !parsedEnd.isFinite)) {
+        throw const FormatException('请输入有效秒数');
+      }
+      final endMs = endText.isEmpty ? 0 : (parsedEnd! * 1000).round();
       if (action == 'preview') previewed = true;
       ref.read(interruptionPolicyProvider).noteUserTransport();
       await api.editClip(
@@ -486,7 +497,7 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
         action,
         token: token,
         positionMs: (a * 1000).round(),
-        clip: Clip(startMs: (a * 1000).round(), endMs: (b * 1000).round()),
+        clip: Clip(startMs: (a * 1000).round(), endMs: endMs),
       );
       if (action != 'preview') {
         settled = true;
@@ -496,12 +507,45 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
     if (mounted) setState(() => busy = false);
   }
 
+  double _durationSeconds(WidgetRef ref) {
+    final view = ref.read(playerProvider).snapshot;
+    final active = !invalidated && view.current?.id == widget.song.id;
+    final ms = active && view.durationMs > 0
+        ? view.durationMs
+        : widget.song.durationMs;
+    return ms / 1000.0;
+  }
+
+  String? _validationIssue(double duration) {
+    final a = double.tryParse(start.text);
+    if (a == null || !a.isFinite || a < 0) {
+      return '请输入有效的起点秒数。';
+    }
+    final endText = end.text.trim();
+    if (endText.isEmpty) return null;
+    final b = double.tryParse(endText);
+    if (b == null || !b.isFinite) {
+      return '请输入有效的终点秒数。';
+    }
+    if (b <= a) {
+      return '终点必须大于起点。';
+    }
+    if (duration > 0 && b > duration) {
+      return '终点不能超过全长 ${duration.toStringAsFixed(1)} 秒。';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final view = ref.watch(playerProvider).snapshot;
     final active = !invalidated && view.current?.id == widget.song.id;
-    final duration =
-        (active ? view.durationMs : widget.song.durationMs) / 1000.0;
+    final durationMs = active && view.durationMs > 0
+        ? view.durationMs
+        : widget.song.durationMs;
+    final duration = durationMs / 1000.0;
+    final unknownDuration = durationMs <= 0;
+    final insets = MediaQuery.viewInsetsOf(context);
     return PopScope(
       canPop: !busy,
       child: AsyncFeature<(String, Clip)>(
@@ -514,83 +558,119 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
             end.text = data.endMs == 0 ? '' : (data.endMs / 1000).toString();
             initialized = true;
           }
-          final a = (double.tryParse(start.text) ?? 0).clamp(
-            0.0,
-            duration.clamp(0.0, double.infinity),
-          );
-          final b = (double.tryParse(end.text) ?? duration).clamp(
+          final issue = _validationIssue(duration);
+          final max = duration > 0 ? duration : 600.0;
+          final a = (double.tryParse(start.text) ?? 0).clamp(0.0, max);
+          final parsedEnd = end.text.trim().isEmpty
+              ? null
+              : double.tryParse(end.text);
+          final b = (parsedEnd ?? (duration > 0 ? duration : a + 1)).clamp(
             a,
-            duration.clamp(a, double.infinity),
+            max,
           );
+          final canEdit = !busy && active;
+          final canSave = canEdit && issue == null && !unknownDuration;
           return ListView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + insets.bottom),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: [
               Text(
                 widget.song.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              if (!active) const Text('当前歌曲已切换，此编辑已停止。请返回后重新打开。'),
-              const SizedBox(height: 16),
-              if (duration > 0)
+              const SizedBox(height: 8),
+              Text(
+                '${sourceShortLabel(widget.song.source)}'
+                '${unknownDuration ? ' · 全长尚未就绪' : ' · 全长 ${formatClock(durationMs)}'}',
+                style: TextStyle(color: context.zero.muted, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '片段按曲目 ID 保存，不修改原文件，也不导出音频。',
+                style: TextStyle(color: context.zero.muted, fontSize: 13),
+              ),
+              if (!active) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '当前歌曲已切换，此编辑已停止。请返回后重新打开。',
+                  style: TextStyle(color: context.zero.danger),
+                ),
+              ],
+              if (issue != null) ...[
+                const SizedBox(height: 12),
+                Text(issue, style: TextStyle(color: context.zero.danger)),
+              ],
+              if (!unknownDuration) ...[
+                const SizedBox(height: 20),
                 RangeSlider(
                   min: 0,
                   max: duration,
-                  values: RangeValues(a, b),
+                  values: RangeValues(a, b.clamp(0, duration)),
                   labels: RangeLabels(
                     '${a.toStringAsFixed(1)} 秒',
-                    '${b.toStringAsFixed(1)} 秒',
+                    end.text.trim().isEmpty
+                        ? '原曲结尾'
+                        : '${b.toStringAsFixed(1)} 秒',
                   ),
-                  onChanged: busy || !active
+                  onChanged: !canEdit
                       ? null
                       : (v) => setState(() {
                           start.text = v.start.toStringAsFixed(1);
-                          end.text = v.end >= duration
+                          end.text = v.end >= duration - 0.05
                               ? ''
                               : v.end.toStringAsFixed(1);
                         }),
                 ),
-              Text('全长 ${duration.toStringAsFixed(1)} 秒；终点留空播放到原曲结尾。'),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: start,
-                enabled: !busy && active,
+                enabled: canEdit,
                 onChanged: (_) => setState(() {}),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(labelText: '起点（秒）'),
+                decoration: const InputDecoration(
+                  labelText: '起点（秒）',
+                  isDense: true,
+                ),
               ),
+              const SizedBox(height: 12),
               TextField(
                 controller: end,
-                enabled: !busy && active,
+                enabled: canEdit,
                 onChanged: (_) => setState(() {}),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(labelText: '终点（秒）'),
+                decoration: const InputDecoration(
+                  labelText: '终点（秒）',
+                  helperText: '留空表示播到原曲结尾。',
+                  isDense: true,
+                ),
               ),
               const SizedBox(height: 24),
               if (busy) const LinearProgressIndicator(),
-              Wrap(
-                spacing: 12,
-                children: [
-                  OutlinedButton(
-                    onPressed: busy || !active ? null : () => _act('preview'),
-                    child: const Text('从起点试听整首'),
-                  ),
-                  FilledButton(
-                    onPressed: busy || !active ? null : () => _act('save'),
-                    child: const Text('保存片段'),
-                  ),
-                  TextButton(
-                    onPressed: busy || !active ? null : () => _act('clear'),
-                    child: const Text('清除片段'),
-                  ),
-                  TextButton(
-                    onPressed: busy ? null : () => Navigator.maybePop(context),
-                    child: const Text('取消'),
-                  ),
-                ],
+              OutlinedButton(
+                onPressed: canSave ? () => _act('preview') : null,
+                child: const Text('从起点试听整首'),
+              ),
+              const SizedBox(height: 10),
+              FilledButton(
+                onPressed: canSave ? () => _act('save') : null,
+                child: const Text('保存片段'),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: canEdit ? () => _act('clear') : null,
+                child: const Text('清除片段'),
+              ),
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: busy ? null : () => Navigator.maybePop(context),
+                child: const Text('取消'),
               ),
             ],
           );
