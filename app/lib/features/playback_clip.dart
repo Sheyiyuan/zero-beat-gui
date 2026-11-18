@@ -23,11 +23,15 @@ class DisplayedClip {
 class ClipUiOverride {
   const ClipUiOverride({
     required this.songId,
+    required this.playbackId,
     required this.startMs,
     required this.endMs,
   });
 
   final String songId;
+
+  /// Playback the edit was applied to. A later load mints a new id.
+  final String? playbackId;
   final int startMs;
   final int endMs;
 }
@@ -36,13 +40,28 @@ class ClipUiOverrideController extends Notifier<ClipUiOverride?> {
   @override
   ClipUiOverride? build() => null;
 
-  void set(String songId, int startMs, int endMs) {
-    state = ClipUiOverride(songId: songId, startMs: startMs, endMs: endMs);
+  void set(String songId, String? playbackId, int startMs, int endMs) {
+    state = ClipUiOverride(
+      songId: songId,
+      playbackId: playbackId,
+      startMs: startMs,
+      endMs: endMs,
+    );
   }
 
-  void clearUnless(String? songId) {
-    if (state == null) return;
-    if (songId == null || state!.songId != songId) state = null;
+  void restore(ClipUiOverride? previous) {
+    state = previous;
+  }
+
+  /// Drops an override that belongs to another song or playback.
+  void retainOnly({required String? songId, required String? playbackId}) {
+    final current = state;
+    if (current == null) return;
+    if (songId == null ||
+        current.songId != songId ||
+        current.playbackId != playbackId) {
+      state = null;
+    }
   }
 }
 
@@ -70,7 +89,9 @@ DisplayedClip? resolveDisplayedClip({
     startMs = host.activeClipStartMs;
     endMs = host.activeClipEndMs;
   }
-  if (override != null && override.songId == song.id) {
+  if (override != null &&
+      override.songId == song.id &&
+      override.playbackId == playbackId) {
     startMs = override.startMs;
     endMs = override.endMs;
   }
@@ -107,7 +128,12 @@ class DisplayedClipController extends Notifier<DisplayedClip?> {
     ref.listen(playerProvider, (previous, next) {
       final prevId = previous?.snapshot.current?.id;
       final id = next.snapshot.current?.id;
-      ref.read(clipUiOverrideProvider.notifier).clearUnless(id);
+      final playbackChanged = previous?.playbackId != next.playbackId;
+      if (prevId != id || playbackChanged) {
+        ref
+            .read(clipUiOverrideProvider.notifier)
+            .retainOnly(songId: id, playbackId: next.playbackId);
+      }
       if (prevId != id) _hostClipSongId = null;
       state = resolveDisplayedClip(
         player: next,
@@ -139,30 +165,87 @@ class DisplayedClipController extends Notifier<DisplayedClip?> {
       state = _resolve();
     };
     host.addListener(_hostListener!);
+    // Load may already have completed. Bind the current song without waiting
+    // for the next host tick, and without writing provider state during build.
+    _bindHostClipToCurrentSong();
     ref.onDispose(() {
       if (_hostListener != null) host.removeListener(_hostListener!);
     });
   }
 
-  void afterClipEdit({
+  /// Applies a clip edit to the subtitle for [playbackId] only.
+  ///
+  /// Returns false when the snapshot or the live host binding is no longer
+  /// that playback. Core save, clear, preview, and cancel each call
+  /// `startPlay`, which stops the old id and later `engine.load`s a new one.
+  /// That load is what updates [PlaybackHost] clip bounds and `open(end:)`
+  /// together. This method must not assign host bounds.
+  bool afterClipEdit({
     required String songId,
+    required String? playbackId,
     required String action,
     required int startMs,
     required int endMs,
   }) {
-    final player = ref.read(playerProvider);
-    if (player.snapshot.current?.id != songId) return;
-    if (action == 'save' || action == 'preview' || action == 'clear') {
-      final nextStart = action == 'clear' ? 0 : startMs;
-      final nextEnd = action == 'clear' ? 0 : endMs;
-      ref.read(clipUiOverrideProvider.notifier).set(songId, nextStart, nextEnd);
-      ref
-          .read(playbackHostProvider)
-          ?.applyClipBounds(startMs: nextStart, endMs: nextEnd);
-      _hostClipSongId = songId;
-      state = _resolve();
+    if (action != 'save' && action != 'preview' && action != 'clear') {
+      return false;
     }
+    if (!_editStillOwns(songId, playbackId)) return false;
+    final nextStart = action == 'clear' ? 0 : startMs;
+    final nextEnd = action == 'clear' ? 0 : endMs;
+    ref
+        .read(clipUiOverrideProvider.notifier)
+        .set(songId, playbackId, nextStart, nextEnd);
+    state = _resolve();
+    return true;
   }
+
+  /// Undoes a preview subtitle. Does not write host clip bounds.
+  ///
+  /// Restores [previous] only while the snapshot and host still name
+  /// [playbackId]. If that playback is gone, the preview overlay is dropped
+  /// and [previous] is not installed on the replacement.
+  void rollbackPreview({
+    required String songId,
+    required String? playbackId,
+    required ClipUiOverride? previous,
+  }) {
+    final current = ref.read(clipUiOverrideProvider);
+    if (current == null ||
+        current.songId != songId ||
+        current.playbackId != playbackId) {
+      return;
+    }
+    final notifier = ref.read(clipUiOverrideProvider.notifier);
+    final stillHere = _editStillOwns(songId, playbackId);
+    if (stillHere &&
+        previous != null &&
+        previous.songId == songId &&
+        previous.playbackId == playbackId) {
+      notifier.restore(previous);
+    } else {
+      notifier.restore(null);
+    }
+    state = _resolve();
+  }
+
+  bool _editStillOwns(String songId, String? playbackId) {
+    final player = ref.read(playerProvider);
+    if (player.snapshot.current?.id != songId) return false;
+    if (player.playbackId != playbackId) return false;
+    final host = _host ?? ref.read(playbackHostProvider);
+    return !_hostMovedOn(host, playbackId);
+  }
+}
+
+/// True when [host] is already playing a different id than [playbackId].
+/// A null binding means the old load was stopped and the next load has not
+/// arrived; that is not a different song yet.
+bool _hostMovedOn(PlaybackHost? host, String? playbackId) {
+  if (host == null) return false;
+  final hostId = host.activePlaybackId;
+  if (hostId == null || hostId.isEmpty) return false;
+  return hostId != playbackId;
 }
 
 final displayedClipProvider =

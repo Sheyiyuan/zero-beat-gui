@@ -33,6 +33,11 @@ class _Binding {
   bool ready = false;
   int intentVersion = 0;
   int? pendingSeek;
+
+  /// Original-timeline bounds from the engine.load that opened this binding.
+  /// open(end:) reads clipEndMs once. Later clip edits must not assign these
+  /// fields: position updates treat clipEndMs as the playback end and emit
+  /// ended when position reaches it.
   int clipStartMs;
   int clipEndMs;
   bool disposed = false;
@@ -96,15 +101,6 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
   int get activeClipEndMs => _binding?.clipEndMs ?? 0;
 
   String? get activePlaybackId => _binding?.playbackId;
-
-  /// Updates clip bounds for the active binding after RPC preview/save/clear.
-  void applyClipBounds({required int startMs, required int endMs}) {
-    final binding = _binding;
-    if (binding == null) return;
-    binding.clipStartMs = startMs < 0 ? 0 : startMs;
-    binding.clipEndMs = endMs < 0 ? 0 : endMs;
-    notifyListeners();
-  }
 
   /// Optional sink for position, state, ended, and failed reports.
   void Function(HostEvent event)? onEvent;
@@ -290,6 +286,8 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
         url: request.stream.url,
         headers: request.stream.headers,
         start: startMs > 0 ? Duration(milliseconds: startMs) : null,
+        // Same end [_onPosition] will use for this binding. Core replaces
+        // both by sending a new engine.load; this open is not rewritten.
         end: binding.clipEndMs > 0
             ? Duration(milliseconds: binding.clipEndMs)
             : null,

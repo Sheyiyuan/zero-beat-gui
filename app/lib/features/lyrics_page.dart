@@ -445,10 +445,17 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
   bool settled = false;
   bool busy = false;
   bool previewed = false;
+  bool _previewApplied = false;
+  ClipUiOverride? _overrideBeforePreview;
+  String? _previewPlaybackId;
+  late final DisplayedClipController _clips;
   @override
   void initState() {
     super.initState();
     api = ref.read(coreApiProvider);
+    // Captured while mounted. Pop rollback runs after an awaited RPC, and
+    // dispose() cannot use ref.
+    _clips = ref.read(displayedClipProvider.notifier);
     subscription = api.states.listen((view) {
       if (view.snapshot.current?.id != widget.song.id &&
           !invalidated &&
@@ -473,25 +480,40 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
     super.dispose();
   }
 
+  /// Restores the subtitle captured before preview.
+  ///
+  /// Called from [PopScope] while this state is still mounted. dispose() runs
+  /// while the tree is finalizing, and Riverpod rejects provider writes then.
+  void _rollbackPreview() {
+    if (!_previewApplied || settled) return;
+    _previewApplied = false;
+    _clips.rollbackPreview(
+      songId: widget.song.id,
+      playbackId: _previewPlaybackId,
+      previous: _overrideBeforePreview,
+    );
+  }
+
   Future<void> _act(String action) async {
     if (busy || invalidated || token.isEmpty) return;
     final issue = _validationIssue(_durationSeconds(ref));
     if (issue != null && (action == 'save' || action == 'preview')) {
       return;
     }
+    final playbackId = ref.read(playerProvider).playbackId;
     setState(() => busy = true);
     await perform(context, () async {
       if (action == 'clear') {
         ref.read(interruptionPolicyProvider).noteUserTransport();
         await api.editClip(widget.song.id, 'clear', token: token);
-        ref
-            .read(displayedClipProvider.notifier)
-            .afterClipEdit(
-              songId: widget.song.id,
-              action: 'clear',
-              startMs: 0,
-              endMs: 0,
-            );
+        if (!mounted) return;
+        _clips.afterClipEdit(
+          songId: widget.song.id,
+          playbackId: playbackId,
+          action: 'clear',
+          startMs: 0,
+          endMs: 0,
+        );
         settled = true;
         if (mounted) Navigator.pop(context);
         if (mounted) setState(() => busy = false);
@@ -508,6 +530,10 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
       }
       final startMs = (a * 1000).round();
       final endMs = endText.isEmpty ? 0 : (parsedEnd! * 1000).round();
+      if (action == 'preview' && !previewed) {
+        _overrideBeforePreview = ref.read(clipUiOverrideProvider);
+        _previewPlaybackId = playbackId;
+      }
       if (action == 'preview') previewed = true;
       ref.read(interruptionPolicyProvider).noteUserTransport();
       await api.editClip(
@@ -517,15 +543,16 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
         positionMs: startMs,
         clip: Clip(startMs: startMs, endMs: endMs),
       );
+      if (!mounted) return;
       if (action == 'save' || action == 'preview') {
-        ref
-            .read(displayedClipProvider.notifier)
-            .afterClipEdit(
-              songId: widget.song.id,
-              action: action,
-              startMs: startMs,
-              endMs: endMs,
-            );
+        final applied = _clips.afterClipEdit(
+          songId: widget.song.id,
+          playbackId: playbackId,
+          action: action,
+          startMs: startMs,
+          endMs: endMs,
+        );
+        if (action == 'preview' && applied) _previewApplied = true;
       }
       if (action != 'preview') {
         settled = true;
@@ -576,6 +603,9 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
     final insets = MediaQuery.viewInsetsOf(context);
     return PopScope(
       canPop: !busy,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _rollbackPreview();
+      },
       child: AsyncFeature<(String, Clip)>(
         load: () => api.beginClip(widget.song.id),
         builder: (context, result, reload) {
