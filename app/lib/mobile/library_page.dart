@@ -1,11 +1,11 @@
 import '../app/chrome.dart';
-import '../app/providers.dart';
 import '../app/theme.dart';
 import '../features/library_actions.dart';
 import '../features/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_core/zero_beat_core.dart' hide Clip;
+import '../features/playback_clip.dart';
 import '../features/session.dart';
 import '../shared/library_pane.dart';
 import '../shared/playback.dart';
@@ -147,12 +147,11 @@ class _ContinuePlaybackRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(playerProvider);
-    final host = ref.watch(playbackHostProvider);
-    final clip =
-        host != null && (host.activeClipStartMs > 0 || host.activeClipEndMs > 0)
+    final clipInfo = ref.watch(displayedClipProvider);
+    final clip = clipInfo != null
         ? playbackClipSubtitle(
-            clipStartMs: host.activeClipStartMs,
-            clipEndMs: host.activeClipEndMs,
+            clipStartMs: clipInfo.startMs,
+            clipEndMs: clipInfo.endMs,
             positionMs: view.snapshot.positionMs,
           )
         : null;
@@ -195,7 +194,9 @@ class _ContinuePlaybackRow extends ConsumerWidget {
         trailing: IconButton(
           tooltip: playing ? '暂停' : '播放',
           onPressed: () => ref.read(transportProvider).toggle(),
-          icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_fill),
+          icon: Icon(
+            playing ? Icons.pause_circle_filled : Icons.play_circle_fill,
+          ),
           color: context.zero.accent,
         ),
         onTap: () => Navigator.of(context).push(

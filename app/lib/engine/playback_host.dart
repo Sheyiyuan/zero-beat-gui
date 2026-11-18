@@ -21,6 +21,7 @@ class _Binding {
     required this.playbackId,
     required this.request,
     required this.playWhenReady,
+    required this.clipStartMs,
     required this.clipEndMs,
   });
 
@@ -32,7 +33,8 @@ class _Binding {
   bool ready = false;
   int intentVersion = 0;
   int? pendingSeek;
-  final int clipEndMs;
+  int clipStartMs;
+  int clipEndMs;
   bool disposed = false;
   bool stopRequested = false;
   bool terminal = false;
@@ -89,9 +91,20 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
 
   String get loudnormNotice => _loudnormNotice;
 
-  int get activeClipStartMs => _binding?.request.stream.clipStartMs ?? 0;
+  int get activeClipStartMs => _binding?.clipStartMs ?? 0;
 
   int get activeClipEndMs => _binding?.clipEndMs ?? 0;
+
+  String? get activePlaybackId => _binding?.playbackId;
+
+  /// Updates clip bounds for the active binding after RPC preview/save/clear.
+  void applyClipBounds({required int startMs, required int endMs}) {
+    final binding = _binding;
+    if (binding == null) return;
+    binding.clipStartMs = startMs < 0 ? 0 : startMs;
+    binding.clipEndMs = endMs < 0 ? 0 : endMs;
+    notifyListeners();
+  }
 
   /// Optional sink for position, state, ended, and failed reports.
   void Function(HostEvent event)? onEvent;
@@ -167,9 +180,11 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
       playbackId: request.playbackId,
       request: request,
       playWhenReady: request.playWhenReady,
+      clipStartMs: request.stream.clipStartMs,
       clipEndMs: request.stream.clipEndMs,
     );
     _binding = binding;
+    notifyListeners();
     _volume = request.volume.clamp(0, 1).toDouble();
     _compDb = request.compDb;
     _autoGain = request.autoGain;
@@ -338,7 +353,7 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
 
   int _startMs(EngineLoad request) {
     var at = request.startAtMs;
-    final clipStart = request.stream.clipStartMs;
+    final clipStart = _binding?.clipStartMs ?? request.stream.clipStartMs;
     if (clipStart > 0 && at < clipStart) at = clipStart;
     return at;
   }

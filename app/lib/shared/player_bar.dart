@@ -9,6 +9,7 @@ import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 
 import '../app/providers.dart';
 import '../app/theme.dart';
+import '../features/playback_clip.dart';
 import '../features/session.dart';
 import 'playback.dart';
 import 'seek_bar.dart';
@@ -126,14 +127,11 @@ class PlayerBar extends ConsumerWidget {
     final song = view.snapshot.current;
     final title = song?.title.isNotEmpty == true ? song!.title : '未在播放';
     final artist = song?.artist ?? '';
-    final host = ref.watch(playbackHostProvider);
-    final clipLine =
-        song != null &&
-            host != null &&
-            (host.activeClipStartMs > 0 || host.activeClipEndMs > 0)
+    final clip = ref.watch(displayedClipProvider);
+    final clipLine = clip != null
         ? playbackClipSubtitle(
-            clipStartMs: host.activeClipStartMs,
-            clipEndMs: host.activeClipEndMs,
+            clipStartMs: clip.startMs,
+            clipEndMs: clip.endMs,
             positionMs: view.snapshot.positionMs,
           )
         : null;
@@ -301,14 +299,11 @@ class NowPlayingBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(playerProvider);
     final song = view.snapshot.current;
-    final host = ref.watch(playbackHostProvider);
-    final clipLine =
-        song != null &&
-            host != null &&
-            (host.activeClipStartMs > 0 || host.activeClipEndMs > 0)
+    final clip = ref.watch(displayedClipProvider);
+    final clipLine = clip != null
         ? playbackClipSubtitle(
-            clipStartMs: host.activeClipStartMs,
-            clipEndMs: host.activeClipEndMs,
+            clipStartMs: clip.startMs,
+            clipEndMs: clip.endMs,
             positionMs: view.snapshot.positionMs,
           )
         : null;

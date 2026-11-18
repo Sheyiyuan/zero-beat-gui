@@ -9,6 +9,7 @@ import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import '../app/providers.dart';
 import '../app/theme.dart';
 import '../shared/playback.dart';
+import 'playback_clip.dart';
 import 'session.dart';
 import 'navigation.dart';
 
@@ -480,6 +481,22 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
     }
     setState(() => busy = true);
     await perform(context, () async {
+      if (action == 'clear') {
+        ref.read(interruptionPolicyProvider).noteUserTransport();
+        await api.editClip(widget.song.id, 'clear', token: token);
+        ref
+            .read(displayedClipProvider.notifier)
+            .afterClipEdit(
+              songId: widget.song.id,
+              action: 'clear',
+              startMs: 0,
+              endMs: 0,
+            );
+        settled = true;
+        if (mounted) Navigator.pop(context);
+        if (mounted) setState(() => busy = false);
+        return;
+      }
       final a = double.tryParse(start.text);
       if (a == null || !a.isFinite) {
         throw const FormatException('请输入有效秒数');
@@ -489,6 +506,7 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
       if (endText.isNotEmpty && (parsedEnd == null || !parsedEnd.isFinite)) {
         throw const FormatException('请输入有效秒数');
       }
+      final startMs = (a * 1000).round();
       final endMs = endText.isEmpty ? 0 : (parsedEnd! * 1000).round();
       if (action == 'preview') previewed = true;
       ref.read(interruptionPolicyProvider).noteUserTransport();
@@ -496,9 +514,19 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
         widget.song.id,
         action,
         token: token,
-        positionMs: (a * 1000).round(),
-        clip: Clip(startMs: (a * 1000).round(), endMs: endMs),
+        positionMs: startMs,
+        clip: Clip(startMs: startMs, endMs: endMs),
       );
+      if (action == 'save' || action == 'preview') {
+        ref
+            .read(displayedClipProvider.notifier)
+            .afterClipEdit(
+              songId: widget.song.id,
+              action: action,
+              startMs: startMs,
+              endMs: endMs,
+            );
+      }
       if (action != 'preview') {
         settled = true;
         if (mounted) Navigator.pop(context);
@@ -664,7 +692,7 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
               ),
               const SizedBox(height: 10),
               TextButton(
-                onPressed: canEdit ? () => _act('clear') : null,
+                onPressed: canEdit && !busy ? () => _act('clear') : null,
                 child: const Text('清除片段'),
               ),
               const SizedBox(height: 4),
