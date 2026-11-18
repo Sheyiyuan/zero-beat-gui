@@ -1,0 +1,38 @@
+// Optional local workaround for Maven Central returning HTTP 403 on this host.
+// Only use Google's HTTPS Maven Central mirror; retain Google/Gradle repositories.
+def mirror = System.getenv('ZERO_BEAT_MAVEN_CENTRAL_MIRROR')
+if (mirror) {
+    if (mirror != 'https://maven-central.storage-download.googleapis.com/maven2') {
+        throw new GradleException('Use the documented Google Maven Central mirror, or disable it.')
+    }
+    def configureRepositories = { repositories ->
+        repositories.maven { url = java.net.URI.create(mirror) }
+        repositories.configureEach { repository ->
+            if (repository instanceof org.gradle.api.artifacts.repositories.MavenArtifactRepository) {
+                def host = repository.url.host
+                if (host in ['repo.maven.apache.org', 'repo1.maven.org']) {
+                    repository.url = java.net.URI.create(mirror)
+                }
+            }
+        }
+    }
+    gradle.beforeSettings { settings ->
+        // Adding an explicit repository disables Gradle's implicit Plugin Portal,
+        // including in Flutter's included build which has no pluginManagement block.
+        settings.pluginManagement.repositories.gradlePluginPortal()
+        settings.pluginManagement.repositories.google()
+        configureRepositories(settings.pluginManagement.repositories)
+        configureRepositories(settings.dependencyResolutionManagement.repositories)
+    }
+    def allowProjectRepositories = true
+    gradle.settingsEvaluated { settings ->
+        allowProjectRepositories = settings.dependencyResolutionManagement.repositoriesMode.get() ==
+            org.gradle.api.initialization.resolve.RepositoriesMode.PREFER_PROJECT
+    }
+    gradle.beforeProject { project ->
+        configureRepositories(project.buildscript.repositories)
+        if (allowProjectRepositories) {
+            configureRepositories(project.repositories)
+        }
+    }
+}

@@ -1,6 +1,6 @@
 # 本机 RPC
 
-Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但仍然通过回环 socket 通信。理由：
+Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但仍然通过本机 socket 通信。理由：
 
 - 事件推送天然异步，不需要在 FFI 里做回调注册与生命周期管理；
 - 同一套协议可以复用到桌面调试、`zero` CLI 验证和 Windows sidecar；
@@ -8,11 +8,12 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 
 ## 传输
 
-- TCP，绑定 `127.0.0.1:0`，由核心返回实际端口；Windows sidecar 通过 stdout 握手行返回 `{port, token}`；
+- 桌面使用 TCP，绑定 `127.0.0.1:0`，由核心返回实际端口；Windows sidecar 通过 stdout 握手行返回 `{port, token}`；
+- Android 使用应用私有目录中的 Unix domain socket，`ZeroStart` 返回 `socket_path` 和 `port: 0`。本机 IPC 不经过 Android 后台 IP 防火墙，避免在系统文件选择器中停留后被断开；socket 权限为 `0600`，关闭时删除，启动时仅回收已无监听者的旧 socket；
 - 每行一个 JSON 对象（NDJSON，UTF-8，`\n` 结尾），单行上限 8 MiB；
 - 连接建立后第一条必须是 `core.hello`，携带 `token`；校验失败立即断开；
-- token 由 `ZeroStart` 返回，只存在内存里，不落盘；端口随机；
-- 只监听回环，不接受局域网连接；Android/Windows 上同样只绑 `127.0.0.1`。
+- token 由 `ZeroStart` 返回，只存在内存里，不落盘；桌面端口随机；
+- 不接受局域网连接；桌面只监听回环，Android 仅监听应用私有 socket。
 
 ## 信封
 
@@ -28,8 +29,8 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 - 请求必须有 `id`（正整数，连接内唯一，限制在 JSON 安全整数范围）；Dart 发奇数、Go 发偶数，重连清空 pending 表；通知（无 `id`）只用于事件；
 - 结果必须是对象，避免顶层数组/标量；
 - 错误码：`-32700` 解析失败、`-32600` 非法请求、`-32601` 未知方法、`-32602` 参数错误、`-32603` 内部错误；业务错误从 `-32000` 起；
-- 所有方法带 3 秒超时（解析/搜索类可到 20 秒，单独声明）。
-- `player.play/next/prev` 在会话接受请求后返回 `{request_id}`，不等解析或出声；播放结果走 `player.state`。`download.start` / `sync.start` 返回任务标识，长任务通过事件报告完成。
+- 播放控制带 3 秒超时；auth／content／browse／lyrics／library／search／download／sync／tasks 与链接解析使用 20 秒。长任务立即返回任务 ID。
+- `player.play/next/prev` 在会话接受请求后返回 `{request_id}`，不等解析或出声；播放结果走 `player.state`。`download.batch.start` / `sync.action` 返回任务标识，长任务通过事件报告完成。
 - 请求处理必须与读循环分离；响应直接完成 pending future。写操作由单一队列发送，不允许两个 writer 拼接帧。
 
 ## 命名空间与方向
@@ -39,14 +40,14 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 | `core.*` | Dart → Go | 握手与协议控制 |
 | `library.*` / `search.*` / `source.*` / `lyrics.*` / `auth.*` / `player.*` / `download.*` / `settings.*` / `sync.*` / `app.*` | Dart → Go | 业务调用；方法名以以下清单为准 |
 | `engine.*` | Go → Dart | 音频引擎命令（load/pause/seek/volume/…） |
-| 事件（无 id） | 双向 | `player.state`、`engine.position`、`sync.state`、`download.progress` 等 |
+| 事件（无 id） | 双向 | `player.state`、`engine.position`、`sync.changed`、`download.changed` 等 |
 
 ## 握手
 
 `core.hello`：
 
 ```json
-{"token":"<ZeroStart 返回的随机 token>","api":1,"repo":2,"client_version":"0.1.0","platform":"linux","engine_capabilities":["clip","loudnorm"]}
+{"token":"<ZeroStart 返回的随机 token>","api":1,"repo":3,"client_version":"0.1.0","platform":"linux","engine_capabilities":["clip","loudnorm"]}
 ```
 
 响应：
@@ -54,96 +55,50 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 ```json
 {
   "api": 1,
-  "repo": 2,
-  "core_version": "0.1.0",
+  "repo": 3,
+  "core_version": "0.8.0",
   "data_dir": "/home/me/.config/zero-beat",
-  "capabilities": ["loudnorm", "clip", "downloads", "sync", "mpris", "tray"],
+  "capabilities": ["library", "search", "link", "player", "auth", "content", "browse", "lyrics", "settings", "batch", "download", "sync", "tasks", "resource", "clip", "loudnorm"],
   "account": {"bilibili": {"logged_in": true, "name": "..."}, "netease": {"logged_in": false}},
   "player": {"queue_len": 42, "index": 3, "state": "paused", "position_ms": 0, "playback_id": null}
 }
 ```
 
-`api` 不匹配时客户端必须拒绝连接并提示升级；`repo` 用于提示同步格式兼容性。
+`api` 不匹配时客户端必须拒绝连接并提示升级；`repo` 用于提示同步格式兼容性。此处按 core 0.8.0 的新仓库 v3 举例；已有 v2 加密仓库仍按核心规则兼容，不能因握手示例而强制升级仓库。GUI 与 core 版本独立，上例展示结构；精确字段以 wire 模型和契约样本为准。
 
-`data_dir` 由启动入口确定，握手不能重定向数据库。引擎能力以本机探测结果为准，下载能力另含经验证的容器范围（见 [04-sync-and-data](04-sync-and-data.md)）。
+`data_dir` 由启动入口确定，握手不能重定向数据库。引擎能力以本机探测结果为准，下载容器范围需要单独执行平台验收（见 [04-sync-and-data](04-sync-and-data.md)）。
 
-## 方法清单（v1）
+## 已实现方法（api 1）
 
-### 协议控制
+下表与 `rpc/codes.go`、`rpc/features.go`、`packages/zero_beat_rpc/lib/src/features.dart` 对应。旧的独立 `download.start`、`sync.start`、`player.comp` 等草案名称不作为公共实现声明。
 
-| 方法 | 说明 |
+| 功能 | 方法与语义 |
 | --- | --- |
-| `core.hello` | 首帧鉴权、版本与能力协商 |
-| `core.cancel` | `{rpc_id}`，请求取消本连接中由调用方发起的未完成业务 RPC；不得取消另一方向的请求 |
+| 协议 | `core.hello`、`core.cancel`；页面使用握手缓存，重连才重新握手 |
+| 曲库读取 | `library.playlists`、`library.songs`（offset／limit，UI 每批 200） |
+| 歌单编辑 | `library.create`、`rename`、`delete`、`unlock`、`refresh`、`refs`、`refs.set`、`remote`、`import_remote` |
+| 搜索／链接 | `search.query`、`search.local`、`source.open_link`；保留来源警告、页数及内容类型 |
+| 账号 | `auth.accounts`、`auth.qr.start`、`poll`、`cancel`、`auth.logout`；二维码按来源和 key 隔离 |
+| 评论／相关推荐 | `content.comments`、`content.related`；只读，绑定进入页面时的曲目 |
+| 主页／电台 | `browse.roots`、`profiles`、`page`、`parse`；浏览引用与可播放曲目分开 |
+| 歌词 | `lyrics.get`、`candidates`、`preview`、`bind`、`unbind`、`offset` |
+| 播放 | `player.play`、`toggle`、`pause`、`stop`、`resume`、`next`、`prev`、`seek`、`volume`、`mode`、`state`；stop 取消加载、释放播放器并保留队列 |
+| 队列 | `player.enqueue`、`insert_next`、`queue_remove`、`queue_move`、`queue_clear` |
+| 片段 | `player.clip.get`、`player.clip.begin`、`player.clip.edit`（preview／save／clear／cancel，固定目标曲目） |
+| 播放偏好 | `settings.get`、`settings.set`，音质／静音／补偿／响度／本地优先／睡眠等 |
+| GUI 偏好 | `settings.gui.get`、`settings.gui.set`；主题、配色、窗口和 GUI 快捷键，与 TUI 键位分开 |
+| 批量 | `library.batch`（play／enqueue／next）；`library.batch.start`（add／remove）与 `download.batch.start` 返回任务 |
+| 下载 | `download.list`、`download.tasks`、`download.add`、`download.action`（cancel／retry／remove_task／cancel_all／remove_record／delete_file） |
+| 后台任务 | `tasks.list`、`tasks.cancel`、`tasks.batch_result`、`tasks.retry_batch`、`tasks.folder_result` |
+| 桌面文件夹 | `library.folder.start`（add／rescan／replace，后台任务）；`library.folder` 保留同步兼容入口 |
+| Android 文件夹 | `library.resource.begin`、`lyrics`、`inspect`、`skip`、`commit`、`cancel`、`unavailable`；暂存扫描、借用描述符、原子提交索引和歌词 |
+| 同步 | `sync.status`、`sync.action`（configure／init／probe／now／auto／accounts／token／passphrase／forget／choice／resolve／discard） |
+| 冲突与归档 | `sync.conflicts`、`sync.version`、`sync.choices`、`sync.archives`、`sync.archive` |
+| 退出 | `app.quit`；释放本运行时成功启动的核心 |
 
-取消是尽力而为：服务端取消对应 context，已经提交的写操作不回滚；客户端需重新查询结果，不盲目重试写请求。已接受的下载任务使用 `download.cancel`，新点歌由 session 取消前一次解析；连接断开取消未完成请求。方法超时同样取消服务端任务，不能只让客户端停止等待。
+批量选择使用 `playlist_id` 或显式歌曲列表。整歌单由核心取得完整目标，不局限于 UI 当前 200 首；任务固定目标快照，保留成功／跳过／失败结果，重试只处理失败项。云端目标为同来源可写歌单，节目身份 `program:<ID>` 保持不变，禁止写入云端歌曲歌单。
 
-### 曲库与歌单
-
-| 方法 | 说明 |
-| --- | --- |
-| `library.playlists` | 歌单树（本地/远端/混合/文件夹），含仅本机标记 |
-| `library.songs` | 分页取歌单曲目（含混合歌单展开、excludes） |
-| `library.local_songs` | 本机曲目（桌面文件夹歌单） |
-| `library.create` / `library.rename` / `library.delete` | 本地歌单 CRUD |
-| `library.add_songs` / `library.remove_song` | 曲目增删 |
-| `library.import_remote` | 导入远端歌单 |
-| `library.add_folder` / `library.rescan` | 文件夹歌单（桌面；Android 后续） |
-| `library.refresh` | 强制刷新远端镜像 |
-
-### 搜索与解析
-
-| 方法 | 说明 |
-| --- | --- |
-| `search.query` | 合并/单源搜索，分页，返回 `pages` 与告警 |
-| `search.local` | 本地曲库搜索 |
-| `source.resolve` | 按 song_id 解析播放地址（不直接给 UI 用，供调试/预取） |
-| `source.lyrics` | 歌词（平台 → 本地 → LRCLIB），含来源与偏移 |
-| `lyrics.bind` / `lyrics.unbind` / `lyrics.offset` | 歌词来源绑定与偏移 |
-
-### 登录
-
-| 方法 | 说明 |
-| --- | --- |
-| `auth.qr.start` | 生成二维码（PNG/ASCII 由 UI 选择） |
-| `auth.qr.poll` | 轮询状态（waiting/scanned/expired/success） |
-| `auth.logout` | 清除登录态并冻结该源镜像，保留曲目与混合歌单引用 |
-
-### 播放（命令进 Go，声音出 Dart）
-
-| 方法 | 说明 |
-| --- | --- |
-| `player.play` | 指定 song_id/队列位置起播 |
-| `player.toggle` / `player.pause` / `player.resume` | 播放/暂停 |
-| `player.next` / `player.prev` | 切歌（受模式影响） |
-| `player.seek` | 绝对位置（ms） |
-| `player.mode` | 顺序/列表循环/单曲/随机 |
-| `player.volume` / `player.mute` | 音量与静音 |
-| `player.comp` | 全局/单曲补偿（dB） |
-| `player.auto_gain` | 自动响度均衡开关 |
-| `player.clip` | 设置/清除片段（起止 ms） |
-| `player.sleep` | 睡眠定时（分钟，0 取消） |
-| `player.queue` | 队列读取、移动、删除、清空、下一首播放 |
-| `player.state` | 拉取当前状态（订阅用事件） |
-
-### 下载与设置
-
-| 方法 | 说明 |
-| --- | --- |
-| `download.start` / `download.cancel` / `download.list` | 下载任务与进度事件 |
-| `settings.get` / `settings.set` | 音量、音质、模式、本地优先等 |
-| `app.quit` | 持久化并关闭核心；完成响应后再关闭传输，超时由宿主执行退出流程 |
-
-### 同步
-
-| 方法 | 说明 |
-| --- | --- |
-| `sync.status` | 仓库配置、上次同步、仅本机计数 |
-| `sync.configure` | 仓库地址、分支、认证方式 |
-| `sync.start` | 手动同步（单飞） |
-| `sync.conflicts` | 冲突列表 |
-| `sync.choose` | 逐项选择 ours/theirs |
-| `sync.unlock` | 口令派生密钥（只在本机内存） |
+后台任务和下载队列归 Session 所有，Socket 断开后继续存在；页面或连接只订阅并重拉任务状态。未确认写命令不重放。进程关闭取消并回收任务，任务历史不承诺跨进程恢复。`core.cancel` 仅取消当前连接的 RPC；已经接受的后台任务通过 `tasks.cancel` / `download.action` 取消。
 
 ### 引擎（Go → Dart）
 
@@ -176,24 +131,28 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 
 | 事件 | 方向 | 负载 |
 | --- | --- | --- |
-| `player.state` | Go → Dart | request_id、playback_id（未加载时为 null）、队列长度、索引、当前曲目、状态、位置、时长、模式、音量、补偿、片段、睡眠定时 |
-| `player.changed` | Go → Dart | 当前曲目变化（用于通知/封面） |
+| `player.state` | Go → Dart | PlayerView：playback_id（未加载时为 null）、play_when_ready、notice／notice_level、snapshot（队列、索引、当前曲目、状态、位置、时长、模式、音量、补偿、片段、睡眠定时） |
 | `engine.position` | Dart → Go | `{playback_id, seq, position_ms, duration_ms}`，250ms |
 | `engine.state` | Dart → Go | `{playback_id, seq, state: buffering/playing/paused/idle}`；终态只用以下事件 |
 | `engine.ended` / `engine.failed` | Dart → Go | `{playback_id, seq, position_ms, error?}`；自然结束/失败，主动 stop 不发送 ended |
 | `library.changed` | Go → Dart | 本地/远端歌单变化，UI 重拉 |
-| `download.progress` | Go → Dart | `{song_id, done, total, state}` |
-| `sync.state` | Go → Dart | `{phase, message, error?}` |
+| `download.changed` / `tasks.changed` | Go → Dart | 失效通知；读取任务和下载快照 |
+| `sync.changed` / `auth.changed` / `settings.changed` / `lyrics.changed` | Go → Dart | 失效通知；重拉对应快照 |
+| `all.changed` | Go → Dart | 失效事件合并溢出时，重拉所有业务快照 |
 | `notice` | Go → Dart | `{text, level}` |
-| `app.activate` | Go → Dart | 第二次启动请求显示主窗口 |
+
+Linux 第二实例通过 GTK GApplication 激活现有窗口，不发送 `app.activate` RPC。
 
 事件不重放；断线后按上述流程恢复，再拉 `player.state` 与当前列表。传输与 session 消息队列必须有界；只有位置通知可以合并，响应和终态不可静默丢弃，可靠消息无法入队时关闭连接。合并位置时不得越过后续终态的序号顺序。
 
 ## DTO 规则
 
+本轮已有可生成的类型契约位于 `tool/core-bindings/wire/` 与 `packages/zero_beat_core/`，详见[绑定说明](../packages/zero_beat_core/README.md)。下列示例用于解释协议；具体已实现的字段与可空性以生成器及契约清单为准。Session 播放代次与 RPC 信封另有明确契约，不能把 controller 的 request 号直接当 playback_id。
+
 - 独立定义 DTO，**不要直接序列化 `store.Song`**：它没有 json tag，`AddedAt` 是 `time.Time`；
 - 时间：仅 RPC DTO 的绝对时间用 RFC3339（UTC），时长/位置用毫秒整数；同步仓库保持现有 v2 字段类型与单位，不套用 RPC 规则；
 - ID 一律字符串；`source` 用 `"bilibili"` / `"netease"` / `"local"`；
+- CID、点赞／播放等 64 位计数以十进制字符串传输，Dart 用精确整数表示；时长与位置仍为毫秒整数，并校验可安全表示范围。不同源的时长先在 Go 投影层转换单位；
 - 金额、浮点音量用 `double`，范围在文档里写明；
 - 字段只增不改；破坏性变更提升 `api`；
 - 错误用 `{code, message, data}`，`message` 给用户看，`data` 给日志。
@@ -214,7 +173,7 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 }
 ```
 
-播放流 DTO：
+播放流 DTO（仅供经过认证的引擎桥接层；页面使用不含 URL／headers 的 StreamInfo）：
 
 ```json
 {
@@ -231,14 +190,16 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 
 ## 安全
 
-- 只绑回环；token 随机 128-bit；hello 失败即断开；
+- 仅监听本机端点；token 随机 128-bit；hello 失败即断开；
 - 不把 cookie/Authorization 写进 URL；headers 只在内存与 RPC 帧里；
 - 日志脱敏：URL 去掉 query，headers 只留键名；
-- 回环地址不是应用隔离边界；Android 上具备网络权限的其他 App 也可能连接。随机端口只用于分配，鉴权依赖 token；未认证连接不能触发业务、订阅事件或取得引擎所有权。
+- 回环地址不是应用隔离边界；桌面随机端口只用于分配。Android 使用私有目录和文件权限隔离，两种传输都必须校验 token；未认证连接不能触发业务、订阅事件或取得引擎所有权。
 - hello 必须在连接后 3 秒内完整到达，认证前帧上限 16 KiB、并发未认证连接上限 8；失败即关闭并释放资源。认证后才启用 8 MiB 帧上限与方法分发。
 - 每个核心只允许一个已认证的 Dart 控制连接；第二连接被拒绝，重连必须等旧连接注销。token 在核心重启时重新生成，比较采用常数时间实现，不记录到日志。
 
 ## 契约测试
+
+现有数据类型使用生成的 core fixture 在 Go / Dart 两端校验；RPC、Session、Flutter 和真实动态库分别验证，结果见[完整验收](17-full-gui-parity.md)，不因 DTO 测试通过而算作设备通过。
 
 - `testdata/rpc/*.json`：每个方法的请求/响应样例，Go 与 Dart 各跑一遍解析；
 - 事件顺序测试：起播 → buffering → playing → ended → 下一首；
@@ -248,3 +209,17 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 - 取消测试：搜索超时/主动取消释放服务端任务；取消后到达的旧解析结果无效，已提交写操作通过重拉校准；
 - 鉴权测试：缺失/错误 token、超时 hello、超大首帧、并发连接超限均被拒绝且无业务副作用；
 - 版本测试：`api` 不匹配必须拒绝。
+
+
+### 首批 Dart 运行时实现
+
+`NativeCore.start` 独占成功启动的原生核心，连接地址和令牌只保存在内存中；`connect` 仅建立 Socket 并握手。运行时断线后先停止旧引擎，再用原凭据手动重连。Go 保留旧控制连接名额直到 Session 完成断线清理，防止旧清理影响新连接。退出及失败回滚调用 `ZeroStop`，不会关闭启动失败时报告的其他实例。
+
+`CoreApi.helloResult` 提供最近一次握手的只读信息，`connections` 发布连接变化；页面不得通过再次 `hello` 查询账号或版本。引擎 `load` 返回表示已接收，实际打开媒体通过事件报告。播放器始终以暂停方式打开文件，随后依据最新意图和音频焦点决定是否出声。
+
+### Android 扫描与片段编辑的补充约定
+
+- `library.resource.begin` 可传 `subdirs`（忽略的音频子目录数）。系统目录枚举只扫描当前层及 `lyrics/` 的歌词文件；不会递归收录音频。
+- `library.resource.lyrics` 接收 `key`（扫描 token）、相对 `name` 和借用的 `fd`。Go 限长读取、识别编码；单文件上限 4 MiB、一次扫描歌词总量上限 32 MiB。随后 `inspect` 按音频名、标签及候选优先级选择歌词、合并翻译，坏旁挂继续尝试其他候选及内嵌歌词。
+- `commit` 将根目录、文件索引和本机歌词放在一个 SQLite 事务里。全部音频不可读时拒绝覆盖旧索引。`cancel` 丢弃暂存数据；平台层中断目录查询，释放未使用的新授权，共用授权由最后一个歌单释放。
+- 新片段编辑器调用 `player.clip.begin` 获得 `{token, clip}`，后续 `edit` 在 `key` 中带回 token。切到别的歌曲再切回后，旧 token 仍无效；试听／取消不改变用户最新的暂停意图。原 `get` 和无 token 的 `edit` 保留兼容性。

@@ -25,7 +25,7 @@ GUI 的视图层和 TUI 没有复用可能，必须重写；但 zero-beat 有约
   - Android：`libzero.so`（c-shared），单进程 + 前台服务；
   - macOS：`libzero.dylib`（c-shared），单进程；关闭 App Sandbox 以共享 TUI 数据；
   - Windows：`zero-core.exe` sidecar（纯 Go，`CGO_ENABLED=0`），Flutter 负责启停；
-- 语言边界用回环 socket + JSON-RPC 2.0，双向方法 + 事件；四端共用同一套 RPC 与 DTO。
+- 语言边界用本机 socket + JSON-RPC 2.0（桌面 TCP、Android 私有 Unix socket），双向方法 + 事件；四端共用同一套 RPC 与 DTO。
 
 ## 后果
 

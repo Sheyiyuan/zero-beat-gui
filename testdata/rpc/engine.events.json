@@ -1,0 +1,50 @@
+{
+  "position": {
+    "jsonrpc": "2.0",
+    "method": "engine.position",
+    "params": {"playback_id": "pb_01", "seq": 3, "position_ms": 16000, "duration_ms": 245000}
+  },
+  "state": {
+    "jsonrpc": "2.0",
+    "method": "engine.state",
+    "params": {"playback_id": "pb_01", "seq": 4, "state": "playing", "position_ms": 16000, "duration_ms": 245000}
+  },
+  "ended": {
+    "jsonrpc": "2.0",
+    "method": "engine.ended",
+    "params": {"playback_id": "pb_01", "seq": 8, "position_ms": 245000}
+  },
+  "failed": {
+    "jsonrpc": "2.0",
+    "method": "engine.failed",
+    "params": {"playback_id": "pb_01", "seq": 5, "position_ms": 16000, "error": "打开失败"}
+  },
+  "player_state": {
+    "jsonrpc": "2.0",
+    "method": "player.state",
+    "params": {
+      "playback_id": "pb_01",
+      "play_when_ready": true,
+      "notice": "",
+      "notice_level": "",
+      "snapshot": {
+        "queue": [],
+        "index": 0,
+        "current": null,
+        "state": "playing",
+        "position_ms": 16000,
+        "duration_ms": 245000,
+        "mode": "list_loop",
+        "volume": 0.8,
+        "comp_db": 0,
+        "song_comp_db": 0,
+        "auto_gain": false,
+        "muted": false,
+        "awaiting": false,
+        "request_id": 4,
+        "sleep_until": null,
+        "quality": "auto"
+      }
+    }
+  }
+}

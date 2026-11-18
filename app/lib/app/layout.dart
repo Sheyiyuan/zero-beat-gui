@@ -1,0 +1,1 @@
+enum AppLayout { desktop, mobile }

@@ -2,7 +2,7 @@
 
 ## 进程模型
 
-**Linux/Android/macOS：单进程**。Flutter App 启动时加载 Go 核心（Linux/Android `libzero.so`，macOS `libzero.dylib`），Go 与 Dart 在同一个进程里，通过本机回环的 NDJSON/JSON-RPC 通信。
+**Linux/Android/macOS：单进程**。Flutter App 启动时加载 Go 核心（Linux/Android `libzero.so`，macOS `libzero.dylib`），Go 与 Dart 在同一个进程里，通过本机 NDJSON/JSON-RPC 通信：桌面使用回环 TCP，Android 使用应用私有 Unix socket。
 
 **Windows：Flutter + `zero-core.exe` sidecar**。Go 核心编成纯 Go 可执行文件（`CGO_ENABLED=0`），由 Flutter 启动/结束，RPC 协议与单进程模式完全一致；这样避开 MinGW 编 Go DLL 的 ABI/运行库问题。
 
@@ -16,7 +16,7 @@ Flutter App 进程（Linux/Android/macOS）
 │   ├─ player.Controller（队列、模式、预取、重试）
 │   ├─ sync（Linux/macOS git CLI；Android go-git；自动回退）
 │   ├─ sysmedia（Linux MPRIS）、instance（flock）
-│   └─ RPC server（127.0.0.1:0 + token）
+│   └─ RPC server（桌面回环 TCP／Android 私有 Unix socket + token）
 └─ 同一进程内的 socket 连接（Dart ↔ Go）
 ```
 
@@ -70,7 +70,7 @@ GUI 需要一份不依赖 Bubble Tea 的 headless 编排。它放在 **zero-beat
 1. Flutter 准备启动配置，桌面默认不传 `data_dir`，由 `ZeroStart` 内复用 TUI 的 `config.DataDir()` / `os.UserConfigDir()`；Linux 尊重 `XDG_CONFIG_HOME`，未设置时为 `~/.config/zero-beat`，macOS 为 `~/Library/Application Support/zero-beat`。当前 TUI 不支持 `ZERO_BEAT_DATA_DIR`，GUI 不单独引入该覆盖项。
 2. `DynamicLibrary.open("libzero.so")`（macOS 为 `libzero.dylib`），调用 `ZeroStart(configJSON)`。
 3. Go 核心先确定并规范化目录、`instance.Acquire`，再打开 SQLite（WAL、迁移）、构建 source registry 和 session。拿不到锁则返回「已在运行」，第二实例只尝试激活已有 GUI 后退出，不能打开数据库或初始化音频。
-4. 核心读取队列并 `controller.Load`，恢复状态但不自动起播；随后启动 RPC/激活端点并返回 `{port, token, api, version}`。任何启动失败都逆序关闭已建资源，最后释放锁。
+4. 核心读取队列并 `controller.Load`，恢复状态但不自动起播；随后启动 RPC/激活端点并返回 `{port, token, api, version}`（Android 另含 `socket_path`，`port` 为 0）。任何启动失败都逆序关闭已建资源，最后释放锁。
 5. Flutter 初始化唯一的引擎适配器，连接 RPC 并发送 `core.hello`（含 token、引擎能力）；握手完成后启动 sync manager、系统媒体命令消费，核心返回恢复后的播放快照。
 6. Flutter 拉歌单/曲目、订阅事件并渲染首屏。
 7. 用户点歌：`player.play` → `BeginPlay` → 异步解析 → `CompletePlay` → `engine.load` 到 Dart → media_kit 播放。

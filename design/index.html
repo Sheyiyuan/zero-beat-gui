@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>零拍 · GUI 设计预览</title>
+<style>
+:root { color-scheme: light; --ink:#2B262B; --muted:#6B5F66; --paper:#F7F3F5; --line:#DFD4DA; --accent:#B02A52; }
+* { box-sizing:border-box; }
+body { margin:0; color:var(--ink); background:var(--paper); font-family:'Noto Sans CJK SC',sans-serif; }
+header { padding:22px 28px; border-bottom:1px solid var(--line); background:white; display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+h1 { font-size:22px; margin:0; font-weight:650; }
+header p { font-size:13px; color:var(--muted); margin:0; }
+.badge { padding:5px 10px; color:var(--accent); background:#F7DBE2; border-radius:6px; font-size:12px; }
+.workspace { display:grid; grid-template-columns:240px minmax(0,1fr); min-height:calc(100vh - 83px); }
+nav { padding:24px 16px; border-right:1px solid var(--line); background:white; }
+nav p { margin:8px 12px 12px; color:var(--muted); font-size:11px; }
+button { font:inherit; color:inherit; background:none; border:1px solid transparent; border-radius:8px; cursor:pointer; }
+nav button { display:block; width:100%; min-height:44px; text-align:left; padding:10px 12px; font-size:13px; margin-bottom:4px; }
+nav button[aria-current=true] { color:var(--accent); background:#F7DBE2; font-weight:600; }
+button:hover { background:#F0E8EC; }
+button:focus-visible, a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+main { min-width:0; padding:24px 28px; }
+.tools { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:14px; }
+h2 { font-size:18px; margin:0; }
+.actions { display:flex; gap:8px; align-items:center; }
+.actions button, .actions a { border:1px solid var(--line); padding:8px 12px; background:white; color:var(--muted); text-decoration:none; font-size:12px; border-radius:8px; }
+.description { color:var(--muted); font-size:13px; margin:0 0 20px; line-height:1.7; }
+.canvas { overflow:auto; background:#E7DFE3; padding:20px; border-radius:10px; border:1px solid var(--line); }
+img { display:block; max-width:100%; height:auto; margin:auto; background:white; }
+.canvas.actual img { max-width:none; }
+footer { font-size:12px; line-height:1.8; color:var(--muted); margin:20px 0 0; }
+footer a { color:var(--accent); }
+@media(max-width:900px) { .workspace { grid-template-columns:1fr; } nav { display:flex; overflow:auto; gap:6px; padding:12px; border-right:0; border-bottom:1px solid var(--line); } nav p { display:none; } nav button { width:auto; white-space:nowrap; margin:0; } main { padding:18px 12px; } .canvas { padding:8px; } header { padding:18px; } }
+@media(prefers-reduced-motion:reduce) { * { scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+<header><h1>零拍 <span style="font-weight:400;color:#6B5F66">/ GUI</span></h1><span class="badge">静态设计预览</span><p>桌面鼠标优先 · 手机独立触控设计 · 常用快捷键</p></header>
+<div class="workspace">
+<nav aria-label="预览页面" id="nav"></nav>
+<main>
+<div class="tools"><h2 id="name">桌面 · 曲库</h2><div class="actions"><label>配色 <select id="theme"><option value="red-light">零拍红 · 浅色</option><option value="red-dark">零拍红 · 深色</option><option value="blue-light">寒拍蓝 · 浅色</option><option value="blue-dark">寒拍蓝 · 深色</option></select></label><button id="zoom" type="button" aria-pressed="false">查看原尺寸</button><a id="source" href="screens/01-desktop-library.svg">打开 SVG</a></div></div>
+<p id="description" class="description">曲库、当前播放与接下来播放，在同一个工作区里。</p>
+<div class="canvas" id="canvas"><img id="screen" src="screens/01-desktop-library.svg" alt="零拍桌面曲库设计预览"></div>
+<footer>所有人物、歌曲、评论、歌词与封面均为虚构示例。页面中的产品按钮为 SVG 图形，此预览不播放音乐、不连接账号。<br>设计规则见 <a href="README.md">设计说明</a>；可复用颜色、字号与布局数值见 <a href="tokens.json">tokens.json</a>。可切换红／蓝配色的深浅色设计参考；这些是设计稿，非 Flutter 截图。</footer>
+</main>
+</div>
+<script>
+let selected = 0;
+const screens = [
+ ['10-desktop-settings-downloads.svg','桌面 · 设置与下载','账号、下载任务、主题和关闭策略。'],
+ ['11-desktop-lyrics-clip.svg','桌面 · 歌词与片段','完整时间轴、起止点输入、试听、取消与来源绑定。'],
+ ['12-desktop-sync.svg','桌面 · 同步与冲突','连接、任务、逐项比较与归档。'],
+ ['13-android-files-downloads-accounts.svg','Android · 文件与账号','系统目录授权、下载导出与账号重试流程。'],
+ ['01-desktop-library.svg','桌面 · 曲库','曲库、当前播放与接下来播放，在同一个工作区里。细红线标示当前播放，完整描边标示键盘焦点。'],
+ ['02-desktop-playing.svg','桌面 · 歌词','专注当前歌词，保留作者入口、评论、相似歌曲与完整播放控制。'],
+ ['03-desktop-comments.svg','桌面 · 评论与推荐','B 站预览评论明确提示登录，推荐视频可播放或加入队列；评论为只读。'],
+ ['04-desktop-artist.svg','桌面 · 歌手主页','从当前歌曲或选中歌曲进入歌手作品，保留来源与返回路径。'],
+ ['05-desktop-user.svg','桌面 · 用户主页','公开歌单与播客节目分开浏览，不混淆歌手身份与用户身份。'],
+ ['06-desktop-radio.svg','桌面 · 播客电台','浏览热门电台、进入主播主页、选择节目播放；播放条始终可控。'],
+ ['07-android-flows.svg','Android · 主流程','4 个 390 × 844 dp 页面：曲库、完整播放页、评论、电台详情。'],
+ ['09-android-discovery-authors.svg','Android · 发现与作者','发现电台；多人作者使用底部选择面板；单作者直接进入主页。'],
+ ['08-states-and-interaction.svg','关键状态与双端交互','登录态同步默认关闭、作者选择、加载、空列表、平台访问失败、节目歌单限制与桌面常用快捷键。']
+];
+const nav=document.getElementById('nav');
+function select(i) {
+ selected=i;
+ const [file,name,description]=screens[i];
+ const asset='themes/'+document.getElementById('theme').value+'/'+file;
+ document.getElementById('screen').src=asset;
+ document.getElementById('screen').alt='零拍 '+name+'设计预览';
+ document.getElementById('name').textContent=name;
+ document.getElementById('description').textContent=description;
+ document.getElementById('source').href=asset;
+ for (const [j,button] of Array.from(nav.querySelectorAll('button')).entries()) button.setAttribute('aria-current',String(j===i));
+ history.replaceState(null,'','#'+file.replace('.svg',''));
+}
+screens.forEach((screen,i)=>{const b=document.createElement('button'); b.type='button'; b.textContent=screen[1]; b.addEventListener('click',()=>select(i)); nav.append(b);});
+document.getElementById('theme').addEventListener('change',()=>select(selected));
+const hash=location.hash.slice(1);select(Math.max(0,screens.findIndex(s=>s[0]===hash+'.svg')));
+document.getElementById('zoom').addEventListener('click',event=>{const actual=document.getElementById('canvas').classList.toggle('actual');event.currentTarget.textContent=actual?'适应窗口':'查看原尺寸';event.currentTarget.setAttribute('aria-pressed',String(actual));});
+</script>
+</body>
+</html>

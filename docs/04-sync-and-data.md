@@ -12,14 +12,14 @@ Dart 永远不直接读写 SQLite 或 sync 仓库；所有数据操作走 RPC。
 
 ## sync 仓库：唯一的跨端契约
 
-格式见 zero-beat 的 [同步设计](https://github.com/Sheyiyuan/zero-beat/blob/main/docs/sync-design.md) 与 [ADR-0020](https://github.com/Sheyiyuan/zero-beat/blob/main/docs/adr/0020-sync-format-v2.md)。v2 布局：
+现行行为见 TUI 的[同步指南](https://github.com/Sheyiyuan/zero-beat-tui/blob/main/docs/guide/sync.md)，v2 字段设计见 [ADR-0020](https://github.com/Sheyiyuan/zero-beat-tui/blob/main/docs/adr/0020-sync-format-v2.md)。0.8.0 新仓库元数据使用 v3，歌单／注释继续沿用 v2 字段与单位；已有 v2 加密仓库在普通同步和切换登录态开关时保留 v2，更换口令时写入 v3。仓库布局：
 
 ```
-meta.json                      # 版本、盐、keycheck；meta.v=2
+meta.json                      # 元数据；新仓库 meta.v=3，兼容已有 v2 加密仓库
 playlists/<id>.json            # 歌单（一实体一文件，merge=binary）
 annotations/<song>.json        # 单曲注释：歌词偏移/绑定、单曲补偿、片段
 keymap.toml                    # 键位覆盖
-accounts/<source>.age          # 登录态密文（Argon2id + XChaCha20-Poly1305）
+accounts/<source>.age          # 可选登录态密文（Argon2id + XChaCha20-Poly1305）
 .gitattributes                 # merge=binary
 ```
 
@@ -28,7 +28,11 @@ accounts/<source>.age          # 登录态密文（Argon2id + XChaCha20-Poly1305
 - 本地歌单、混合歌单；混合歌单中的远端引用只保存定位信息，导入侧补占位后按平台刷新，不同步完整远端镜像；
 - 单曲注释：歌词偏移、歌词绑定（portable）、单曲音量补偿、片段；
 - `keymap.toml`；
-- 加密后的登录态（accounts LWW，按密文内 `updated_at`）。
+- 加密后的登录态（默认关闭；每台设备手动开启后参与导出／导入，accounts LWW 按密文内 `updated_at`）。
+
+GUI 必须沿用 `sync_accounts=false` 默认值，开关关闭时不因缺少登录态密钥警告或阻断歌单同步；新建 v3 仓库可不设口令，首次启用登录态同步再设置。关闭开关不删除本机登录信息、缓存密钥或远端既有密文与历史。访问仓库的 HTTPS/SSH 认证仍需配置，与登录态加密口令分开。
+
+v3 仓库不能交给仅支持 v2 的旧客户端同步，GUI 提示应明确要求升级参与设备。混合歌单的 `excludes` 排除关系仍会同步，不能混同于整个歌单的 `sync_excluded` 仅本机标记。
 
 **不同步**（设备态 / 本机数据）：
 
@@ -58,7 +62,7 @@ go-git 后端要覆盖 init/clone、fetch、push、checkout、add、commit、res
 - 认证：HTTPS token 或 SSH key（`x/crypto/ssh`），密钥放应用沙盒；
 - 合并由共享的实体合并器完成；后端只提供传输、对象读写与引用更新。不能依赖 go-git 的 fast-forward merge 实现分叉合并，也不能让 CLI 另用一套 `git merge` 决策。
 - 冲突输入为固定提交的 `base/local/remote` 字节及存在标记；删除不能用空字节文件表示。CLI 从 `git show <commit>:<path>` 读取，go-git 从对应 tree 读取，不依赖 index stage 1/2/3。
-- 现有 `Git.Merge`、`collectConflicts`、`Resolve` 和恢复逻辑需要共同重构。冲突实体展示保持兼容；本地事务元数据若变化须版本化并拒绝不兼容恢复，不能把它当成仅替换 git 命令的工作。
+- 共享三方合并、冲突与恢复已在 core 的双后端实现；GUI 复用现有接口。冲突实体展示保持兼容；本地事务元数据若变化须版本化并拒绝不兼容恢复。
 
 ### 合并历史与事务
 
@@ -77,6 +81,7 @@ go-git 后端要覆盖 init/clone、fetch、push、checkout、add、commit、res
 - 检查最终文件树、冲突分类、合并提交两个父节点；远端头必须是待推送提交的祖先。完成后再同步一次，无额外内容改动、无重复冲突。
 - 覆盖冲突期间用户编辑/远端推进、push 被抢先、进程中断恢复，以及 CLI→go-git→CLI 顺序切换同一受管克隆。
 - 用现有 TUI 的 v2 样本与导入/导出测试固定字节格式；TUI 阶段实现共享后端与回归；P1 验证 Android HTTPS，P5 接入 GUI。
+- 补充 v3 无口令初始化、每设备登录态开关、关闭状态下缺少／失效密钥仍能同步歌单，以及已有 v2 仓库切换开关不升级的双端用例。
 
 生产后端和模块迁移已前移至 TUI 工作；GUI P5 只计算配置、冲突 UI 与 RPC 接入的 1–2 人周。历史 6.5–8.5 人周后端估算不再重复计入 GUI 总量。
 
@@ -111,25 +116,18 @@ go-git 后端要覆盖 init/clone、fetch、push、checkout、add、commit、res
 
 ## 移动端存储与权限
 
-- 下载默认写应用沙盒（`Downloads/` 子目录），通过系统分享或「导出到文件」交给用户；
-- Android 10+ 不做「任意路径写入」；需要公共目录时用 MediaStore（后续）；
-- 封面缓存放应用缓存目录，受系统清理影响，可重新下载；
-- 文件夹歌单（SAF 目录树）不在 v1；本地文件先支持「从文件选择器导入单曲」，后续再做目录扫描；
-- 本地库的内容指纹必须与桌面算法一致（zero-beat 已有跨平台已知答案测试），否则同一文件在两端会得到不同身份。
+- 下载写应用私有目录；Android 10+ 使用 MediaStore 导出到系统音乐目录，或用系统文件选择器另存，支持分享。失败不破坏私有完成文件。
+- 文件夹歌单使用 SAF 目录树和持久授权，浅层扫描；不把 `content://` 转为本地路径。ContentResolver 借出文件描述符，核心计算身份／读取内嵌标签，归还时关闭句柄。
+- 扫描先暂存后提交；取消不覆盖已有索引，目录失联保留索引并标记，重新授权后重扫。文件夹／仅本机歌单和本地歌词绑定不参与仓库同步。
+- 本机歌词支持旁挂 LRC、内嵌歌词和文件选择器绑定。不同平台仍需通过已知答案测试使用一致身份算法。
 
-### Android 下载：完整媒体流直接落盘
+### Android 下载：libav 无损封装与标签
 
-**当前缺口**：`zero-beat-core/download.Run` 在下载后必经 `ffmpegRemux`，使用 `exec.LookPath/CommandContext`；把它包装成 SDK 不会使其在 Android 可用。media_kit 提供播放能力，不提供这条下载封装链路。
+共享 Go 传输／续传与双任务下载队列，Android 原生 `libzeroremux.so` 复制音频包并写入标题、艺人、专辑，不执行外部 ffmpeg。输出重新打开校验音轨与标签后，Go fsync、原子替换并登记索引。取消、资源变化、损坏或写入失败不登记成功；强制下载失败保留旧文件。
 
-v0.1 采用以下设计，决策见 [ADR-0009](decisions/0009-android-download.md)：
+FFmpeg 7.1.1 源码固定摘要并验证官方签名，NDK r28c 构建所需 LGPL 组件。APK 校验所有动态库依赖、ABI 和 16KB 对齐。详见 [ADR-0009](decisions/0009-android-download.md) 与[原生组件构建](../native/remux/README.md)。
 
-- Go 下载器拆分为共享 HTTP 传输/续传、可注入的完成处理器、最终索引写入。桌面仍使用 ffmpeg 完成处理器；Android 使用完整媒体流落盘处理器，不运行外部 ffmpeg，也不在 Dart 重写下载任务队列。
-- Android 只接受可由单次 HTTP 资源完整保存、并通过容器检查的音频。P1 先验证 B 站完整 M4A/MP4 音频资源与网易云 MP3/FLAC 等实际样本；HLS/DASH 清单、缺少初始化段的碎片、未知容器不在支持范围。编码名称与容器不同，不能直接复用按 codec 推断扩展名的规则。
-- 先写稳定 `.part` 文件，校验响应范围、长度与资源身份；Range 被忽略则重下，资源发生变化不能拼接旧片段。取消/失败不写成功索引；完成校验后同文件系统原子改名，再登记 `downloads`，索引失败留下的文件须可在重试时重新校验和登记。
-- Android 保留原容器和已有标签，不承诺写入标题/艺人标签。应用内展示使用 Go 曲库元数据；分享导出会明确保留原媒体标签。重封装、转码和嵌入标签另行评估原生/libav 后端，不隐含纳入 v0.1。
-- 能力同时报告完成处理器与已验证容器；不支持的流返回明确错误，不伪装成下载成功。断网时命中有效下载必须直接本地播放；文件损坏时报告本地失败，联网才尝试远程回落。
-
-P1 必须在 Android 真机、未安装 ffmpeg 的环境下覆盖两音源的支持样本、取消/续传和飞行模式播放。P3 再交付批量任务、下载管理与分享；若必需音源无法完成此闭环，必须修改下载方案和排期，不能以桌面下载通过替代手机验收。
+真实 B 站／网易云下载、取消／续传、标签回读、导出和飞行模式播放必须在 Android 设备验收；自动测试结果与设备结果分开记录。
 
 ### macOS / Windows 的差异
 
@@ -141,13 +139,13 @@ P1 必须在 Android 真机、未安装 ffmpeg 的环境下覆盖两音源的支
 
 - 登录态在 SQLite 里是明文 JSON（与 TUI 现状一致）；Android 后续可用 Keystore 包一层；
 - 同步仓库里的账号是 XChaCha20-Poly1305 密文，口令只在本机内存；
-- RPC 只绑回环；日志不打印 URL query、Cookie、Token；
+- RPC 仅监听本机端点（桌面回环、Android 私有 Unix socket）；日志不打印 URL query、Cookie、Token；
 - 与 TUI 相同的免责声明：音源内容版权归平台，项目不托管内容。
 
 ## 兼容与升级
 
-- 读 `meta.json` 的 `v`：`v=1` 可读并按 zero-beat 规则升级；`v=2` 正常；`v>2` 拒绝写入并提示升级 App；
+- 读 `meta.json` 的 `v`：`v=1` 可读并按 core 规则升级；`v=2` 的加密仓库兼容；`v=3` 支持未启用登录态加密的仓库；超出核心支持范围的版本拒绝写入并提示升级 App；
 - 当前核心使用严格 JSON 解码（`DisallowUnknownFields`），并没有未知字段往返保留能力。v1 不承诺透传未知字段，也不在 v2 内自行扩展格式；新字段须先经过核心的兼容/版本决策。
-- SDK/双后端实现需新增写前校验：对本地头和 fetched 远端树中受管实体做格式检查；遇未知字段/不支持版本应在数据库导入、快照覆盖、提交或 push 前中止写同步，提示升级。现有部分导入路径“警告后跳过实体”不能作为可安全重新导出的依据。可解密账号也做严格校验；不能解密的账号沿用现有密钥异常处理，保留原密文，不覆盖成空账号。
+- GUI 复用 core 已有的写前校验：对本地头和 fetched 远端树中受管实体做格式检查；遇未知字段/不支持版本应在数据库导入、快照覆盖、提交或 push 前中止写同步，提示升级。部分导入路径“警告后跳过实体”不能作为可安全重新导出的依据。启用登录态同步后，可解密账号也做严格校验；不能解密的账号保留原密文，不覆盖成空账号。关闭登录态同步时不执行账号解密／导入，也不因缺少密钥反复警告。
 - 验收包含带未知字段的 v2 样本：除 fetch 的对象/远端引用与错误记录外，本地数据库、工作树及本地分支均不被改写，不执行 push。只读查看快照可用于诊断，不能随后自动导出覆盖。
 - 多设备升级顺序：先升级所有客户端，再让任意一台执行同步（与 zero-beat v0.7.0 的说明一致）。

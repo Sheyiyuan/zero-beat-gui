@@ -1,132 +1,46 @@
 # 构建与发布
 
-## 工具链
+Linux 与 Android 开发产物已进入联合验收；core／TUI 0.8.0 继续不发布，不创建标签。本页前半是当前可执行入口，macOS／Windows 部分保留后续平台约定。
 
-| 组件 | 版本/要求 | 说明 |
-| --- | --- | --- |
-| Go | 1.26.x（对齐 zero-beat `go.mod`） | 编 `libzero.so` / `libzero.dylib`（c-shared）或 `zero-core.exe` |
-| Flutter | stable，spike 时锁定具体版本 | Android / Linux / macOS / Windows |
-| Android SDK | API 35（compile/target） | minSdk 23 |
-| Android NDK | 26.3.x | Go c-shared 交叉编译 |
-| JDK | 21 | Gradle |
-| Linux 构建依赖 | clang、cmake、ninja、pkgconf、gtk3、libmpv、libayatana-appindicator3 | Flutter Linux + media_kit + 托盘 |
-| macOS 构建依赖 | macOS 12+、Xcode（完整）、CocoaPods、Go 1.26 | Flutter macOS + `libzero.dylib` + 公证 |
-| Windows 构建依赖 | Windows 10/11、Visual Studio 2022「Desktop development with C++」、CMake/Ninja、rustup | Flutter Windows + `smtc_windows`（Rust 插件） |
+## 当前构建入口
 
-> iOS 不在构建矩阵；Windows 为 P7（见 [10-windows](10-windows.md)），v0.1 不发布；macOS 为 P1（见 [11-macos](11-macos.md)），v0.1 交付。
+在集成仓库根目录：
 
-## 仓库布局与模块依赖
-
-统一仓库结构：
-
-```text
-zero-beat/
-├── go.work
-├── zero-beat-core/          # 共享 Go module，含 sync/media/player 等公开包
-├── zero-beat-tui/           # Go module，cmd/zero 与桌面/终端实现
-├── zero-beat-site/          # VitePress 网站包，独立 Pages 工作流
-└── zero-beat-gui/           # 目前为设计文档；后续独立应用包
-    ├── app/                # 计划：Flutter，包标识 zero_beat_gui
-    ├── cmd/lib/            # 计划：c-shared
-    ├── cmd/exe/            # 计划：Windows sidecar
-    ├── rpc/                # 计划：协议与 RemoteEngine 适配
-    └── docs/
+```sh
+source zero-beat-gui/tool/dev-env.sh
+make check-gui
+make gui-linux
+make gui-android
 ```
 
-GUI 的 Go module 创建在 zero-beat-gui 根，路径为 github.com/sheyiyuan/zero-beat/zero-beat-gui；require 固定版本的 zero-beat-core，开发时加入根 go.work。**不在 go.mod 提交兄弟模块相对路径 replace**；core/v0.8.0 打 tag 前，go.work 用版本精确的 `replace` 指向本地 core，tag 后移除。第三方网易云依赖替换必须同步到消费模块，不能依赖其自动传递。
+`gui-linux` 先构建当前 Go `cmd/lib`，再由 Flutter CMake 将 `libzero.so` 安装进 bundle。Linux 托盘插件在新 Ayatana 上的弃用警告保持可见，仅该插件不将弃用警告当作编译错误。
 
-核心目前公开业务包；GUI Session 门面在 P0 实现。同步直接调用 zero-beat-core/sync，不复制快照、加密或合并实现。平台实现用 build tag 区分，Linux 专用 DBus 代码需排除 android。
+`gui-android` 使用 `scripts/build-apk.sh`：先校验固定 FFmpeg 7.1.1 源码并构建原生 `libzeroremux.so`，再以 NDK r28c/API 24 构建当前 Go 核心，最后构建 arm64 调试 APK。项目显式过滤插件 ABI，不依赖 Flutter target-platform 自动过滤。所有原生库必须通过 `scripts/check-apk.py` 的 AArch64、NEEDED 依赖闭包、ELF LOAD 16KB 与 zipalign 检查。
 
-根 make check 检查两个现有 Go module，make check-modules 验证 GOWORK=off 的独立消费。以下 GUI 命令仍是入口实现后的约定，尚不能当成已完成的构建。
+首次构建先按[原生组件说明](../native/remux/README.md)取得并验证源码。NDK、Flutter、Java、Gradle 配置只由 `tool/dev-env.sh` 的局部环境控制。Maven 初始化脚本保留 Plugin Portal、Google 和项目仓库，仅替换 Maven Central；`ZERO_BEAT_MAVEN_CENTRAL_MIRROR=''` 可关闭替换。
 
-## 入口
+| 本地产物 | 路径（相对 GUI） |
+| --- | --- |
+| Linux bundle | `app/build/linux/x64/debug/bundle/zero_beat_gui` |
+| Android arm64 APK | `app/build/app/outputs/flutter-apk/app-debug.apk` |
+| Linux 核心 | `build/libzero.so` |
+| Android 原生库 | `app/android/app/src/main/jniLibs/arm64-v8a/` |
+| 原生可重链接输入 | `build/remux-arm64/relink/` |
 
-### c-shared（Linux/Android/macOS）
+运行及隔离曲库验收见[应用说明](../app/README.md)。实际通过状态见[完整功能验收](17-full-gui-parity.md)；历史首批报告不代表最新构建。
 
-```go
-// cmd/lib/main.go
-package main
+## 模块与入口
 
-/*
-#include <stdlib.h>
-*/
-import "C"
+`zero-beat-core`、`zero-beat-tui`、`zero-beat-gui` 独立 module，由集成仓库 `go.work` 联调。GUI 只依赖公开 Session／业务包，不 import TUI internal。未发布 core 0.8.0 时，独立验证通过 `scripts/check-modules.py` 的临时本地代理进行，不能临时发布版本以满足构建。
 
-//export ZeroStart
-func ZeroStart(cfg *C.char) *C.char { /* 防重复启动；先锁后开库，恢复队列，返回 JSON */ }
-
-//export ZeroStop
-func ZeroStop() { /* 停引擎、持久化、释放锁 */ }
-
-//export ZeroFree
-func ZeroFree(p *C.char) { /* 释放 ZeroStart 返回的 C 分配内存 */ }
-
-func main() {}
-```
-
-返回：
-
-```json
-{"ok":true,"port":43123,"token":"…","api":1,"repo":2,"version":"0.1.0"}
-```
-
-失败时 `{"ok":false,"code":"already_running","message":"…","pid":1234}`。
-
-`ZeroStart` 在工作 isolate 中调用，不能阻塞 UI；初始化失败须逆序清理。返回值必须为 C 分配内存，Dart 复制后调用 `ZeroFree`；不返回 Go 堆指针。`ZeroStop` 可重复调用。桌面缺省目录由 Go 统一解析；Android 显式传入沙盒根路径和下载完成处理器选项。
-
-### sidecar（Windows）
-
-```go
-// cmd/exe/main.go
-package main
-
-func main() {
-    // 解析 --port；核心按 TUI 规则确定目录，先锁后开库；随机生成 token
-    // 启动成功后仅向 stdout 输出握手 JSON；诊断写 stderr，阻塞到退出信号
-}
-```
-
-Flutter 启动它并读取 stdout 的握手行（`{"port":…,"token":…}`），再用同一套 RPC 连接。
-
-## 构建 Linux
-
-```bash
-# 1) Go 核心
-CGO_ENABLED=1 go -C core build -buildmode=c-shared -o ../app/linux/lib/libzero.so ./cmd/lib
-
-# 2) Flutter
-(cd app && flutter build linux --release)
-
-# 3) 把 libzero.so 放进 bundle，设置 rpath=$ORIGIN/lib
-```
-
-- Flutter Linux 用 CMake 打包，需在 `linux/CMakeLists.txt` 里安装 `libzero.so` 并设置 `INSTALL_RPATH "$ORIGIN/lib"`；
-- media_kit 在 Linux 依赖 libmpv（`media_kit_libs_linux` 会处理）；托盘依赖 libayatana-appindicator3；
-- 产物用 AppImage 或 `.deb`；提供 `.desktop` 与图标（可参考 `zero-beat-tui/internal/desktop`）。
-
-## 构建 Android
-
-```bash
-export NDK=$ANDROID_HOME/ndk/26.3.11579264
-export CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang
-CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
-  go -C core build -buildmode=c-shared -o ../app/android/app/src/main/jniLibs/arm64-v8a/libzero.so ./cmd/lib
-
-(cd app && flutter build apk --release --split-per-abi)
-```
-
-- 模拟器另编 `x86_64`；
-- Android 15 要求 16 KB 页对齐，链接参数需包含 `-Wl,-z,max-page-size=16384`（spike 时用 `zipalign`/`check_elf_alignment` 验证）；
-- `libzero.so` 与 media_kit 的 `.so` 一起进 APK/AAB；
-- Android 下载注入完整媒体流落盘处理器，不打包/执行 ffmpeg；容器支持矩阵与无 ffmpeg 离线测试结果随版本记录（[ADR-0009](decisions/0009-android-download.md)）；
-- 签名用 upload keystore；Play 用 AAB，侧载用 APK。
+c-shared 导出 `ZeroStart`、`ZeroStop`、`ZeroFree`。Dart 在工作 isolate 启动核心，复制结果并释放 C 内存；只有成功启动的运行时拥有关闭权。凭据只在内存，重新连接不重复启动核心，失败按逆序释放资源。
 
 ## 构建 Windows（P7）
 
 ```powershell
 # 1) Go 核心：纯 Go，无 cgo，可在 Linux 交叉编译
 $env:GOOS="windows"; $env:GOARCH="amd64"; $env:CGO_ENABLED="0"
-go -C core build -trimpath -ldflags "-s -w" -o ../app/windows/runner/zero-core.exe ./cmd/exe
+go build -trimpath -ldflags "-s -w" -o app/windows/runner/zero-core.exe ./cmd/exe
 
 # 2) Flutter Windows（必须在 Windows 上）
 cd app
@@ -144,7 +58,7 @@ flutter build windows --release
 ```bash
 # 1) Go 核心：arm64（Intel 另编 amd64 后 lipo）
 CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 \
-  go -C core build -buildmode=c-shared -o ../app/macos/Frameworks/libzero.dylib ./cmd/lib
+  go build -buildmode=c-shared -o app/macos/Frameworks/libzero.dylib ./cmd/lib
 install_name_tool -id @rpath/libzero.dylib app/macos/Frameworks/libzero.dylib
 
 # 2) Flutter
@@ -167,7 +81,7 @@ xcrun stapler staple zero-beat.dmg
 - 签名/公证需要 Apple Developer 账号；未公证的构建只适合本机自用；
 - 下载依赖 ffmpeg：检测 Homebrew/系统 ffmpeg，没有时禁用下载。
 
-## Flutter 依赖（预期）
+## Flutter 依赖
 
 | 依赖 | 用途 |
 | --- | --- |
@@ -176,19 +90,19 @@ xcrun stapler staple zero-beat.dmg
 | `smtc_windows` | Windows SMTC（媒体键、系统媒体浮层） |
 | `window_manager` / `tray_manager` | 桌面窗口与小窗、托盘 |
 | `path_provider` | Android 数据目录 |
-| `dart:io Socket` | TCP NDJSON RPC，与 02-rpc 的传输约定一致；不使用 WebSocket 帧 |
-| `flutter_riverpod` / `bloc` | 状态管理（实现时定） |
+| `dart:io Socket` | 桌面 TCP／Android Unix socket NDJSON RPC，与 02-rpc 的传输约定一致；不使用 WebSocket 帧 |
+| `flutter_riverpod` | 状态管理 |
 | `dynamic_library` / `dart:ffi` | 加载 `libzero.so` / `libzero.dylib` 并调用 `ZeroStart`（Windows 不需要） |
 | `local_notifier` | Windows 通知（可选） |
 
-注意：插件最低 Flutter/Dart 版本在 P1 按实际选定版本核对并锁定。不引入 `flutter_ffmpeg`；各端播放不依赖 ffmpeg 可执行文件，桌面下载仍依赖它，Android 下载使用完整媒体流处理器。
+注意：插件最低 Flutter/Dart 版本在 P1 按实际选定版本核对并锁定。不引入 `flutter_ffmpeg`；各端播放不依赖 ffmpeg 可执行文件，桌面下载仍依赖它，Android 下载使用原生 libav 封装处理器。
 
 ## Android Manifest
 
 - 权限：`INTERNET`、`FOREGROUND_SERVICE`、`FOREGROUND_SERVICE_MEDIA_PLAYBACK`、`POST_NOTIFICATIONS`、`WAKE_LOCK`；
 - `audio_service` 的 Service/Receiver 声明；
 - `android:launchMode="singleTask"`；
-- `minSdk 23`、`targetSdk 35`。
+- `minSdk 24`、`targetSdk 36`；与本轮 Flutter 基线对齐。
 
 ## CI
 
@@ -215,6 +129,8 @@ xcrun stapler staple zero-beat.dmg
 - `api`：RPC 协议版本，破坏性变更才升；
 - `repo`：同步仓库版本，必须与 zero-beat 的 `meta.v` 对齐；
 - 升级 zero-beat 依赖时，跑「同一仓库双端同步」集成测试。
+
+首轮联合发布须完成 GUI 路线图的发布验收，并补跑 TUI 评论／推荐／主页／节目、桌面共享数据、默认关闭登录态同步及 v2/v3 仓库的双端回归。通过后再按 core → TUI → 集成仓库应用标签的依赖顺序发布，并同时提供 GUI 安装包；GUI Release 保持非 latest，避免抢占现有 TUI 安装脚本入口。
 
 ## 发布物
 

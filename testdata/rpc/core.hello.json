@@ -1,0 +1,51 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "core.hello",
+    "params": {
+      "token": "00112233445566778899aabbccddeeff",
+      "api": 1,
+      "repo": 3,
+      "client_version": "0.1.0-dev",
+      "platform": "linux",
+      "engine_capabilities": ["clip"]
+    }
+  },
+  "result": {
+    "api": 1,
+    "repo": 3,
+    "core_version": "0.8.0",
+    "gui_version": "0.1.0-dev",
+    "data_dir": "/tmp/zero-beat",
+    "capabilities": ["library", "search", "link", "player", "clip"],
+    "account": {
+      "bilibili": {"logged_in": false, "name": ""},
+      "netease": {"logged_in": false, "name": ""}
+    },
+    "player": {
+      "playback_id": null,
+      "play_when_ready": false,
+      "notice": "",
+      "notice_level": "",
+      "snapshot": {
+        "queue": [],
+        "index": 0,
+        "current": null,
+        "state": "idle",
+        "position_ms": 0,
+        "duration_ms": 0,
+        "mode": "list_loop",
+        "volume": 0.8,
+        "comp_db": 0,
+        "song_comp_db": 0,
+        "auto_gain": false,
+        "muted": false,
+        "awaiting": false,
+        "request_id": 0,
+        "sleep_until": null,
+        "quality": "auto"
+      }
+    }
+  }
+}

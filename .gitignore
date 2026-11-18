@@ -23,6 +23,7 @@ app/android/.gradle/
 app/android/local.properties
 app/android/key.properties
 app/android/**/jniLibs/**/*.so
+app/android/**/jniLibs/**/*.h
 app/windows/flutter/ephemeral/
 *.apk
 *.aab
@@ -38,3 +39,7 @@ app/windows/flutter/ephemeral/
 *.log
 .DS_Store
 /scratch/
+
+# Design preview script caches
+__pycache__/
+*.py[cod]

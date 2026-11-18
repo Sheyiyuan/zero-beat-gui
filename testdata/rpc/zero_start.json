@@ -1,0 +1,26 @@
+{
+  "linux": {
+    "request": {"data_dir": "", "platform": "linux", "lock": true},
+    "ok": {
+      "ok": true,
+      "port": 43123,
+      "token": "00112233445566778899aabbccddeeff",
+      "api": 1,
+      "repo": 3,
+      "version": "0.1.0-dev"
+    }
+  },
+  "android": {
+    "request": {
+      "data_dir": "/data/user/0/dev.sheyiyuan.zero_beat_gui/files",
+      "platform": "android",
+      "lock": false
+    }
+  },
+  "already_running": {
+    "ok": false,
+    "code": "already_running",
+    "message": "另一个 zero-beat 已在运行",
+    "pid": 1234
+  }
+}

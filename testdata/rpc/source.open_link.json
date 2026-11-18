@@ -1,0 +1,26 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "source.open_link",
+    "params": {"text": "https://www.bilibili.com/video/BV1GJ411x7h7?p=2"}
+  },
+  "result": {
+    "matched": true,
+    "kind": "track",
+    "ref": {"source": "bilibili", "external_id": "BV1GJ411x7h7", "page": 2, "cid": "0"},
+    "song": {
+      "id": "bilibili:BV1GJ411x7h7:2",
+      "source": "bilibili",
+      "remote_id": "BV1GJ411x7h7",
+      "page": 2,
+      "cid": "0",
+      "title": "",
+      "artist": "",
+      "album": "",
+      "duration_ms": 0,
+      "cover": "",
+      "added_at": null
+    }
+  }
+}

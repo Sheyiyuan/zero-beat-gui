@@ -1,0 +1,28 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "library.songs",
+    "params": {"playlist_id": "local-default", "offset": 0, "limit": 50}
+  },
+  "result": {
+    "songs": [
+      {
+        "id": "bilibili:BV1demo:1",
+        "source": "bilibili",
+        "remote_id": "BV1demo",
+        "page": 1,
+        "cid": "0",
+        "title": "很长很长的示例标题用来检查单行省略时仍然保留完整语义",
+        "artist": "示例作者",
+        "album": "",
+        "duration_ms": 245000,
+        "cover": "",
+        "added_at": "2026-11-01T12:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "offset": 0,
+    "limit": 50
+  }
+}

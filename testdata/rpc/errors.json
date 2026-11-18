@@ -1,0 +1,22 @@
+{
+  "unauthorized": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "error": {"code": -32001, "message": "鉴权失败", "data": {}}
+  },
+  "version": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "error": {"code": -32002, "message": "需要升级客户端", "data": {"api": 1}}
+  },
+  "stale_playback": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "error": {"code": -32011, "message": "播放代次已过期", "data": {"reason": "stale_playback"}}
+  },
+  "cancelled": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "error": {"code": -32004, "message": "已取消", "data": {}}
+  }
+}

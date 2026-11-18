@@ -1,0 +1,6 @@
+name: zero_beat_core
+description: Generated data contracts for the zero-beat Go core. No transport or session implementation.
+version: 0.8.0-dev.1
+publish_to: none
+environment:
+  sdk: '>=3.11.0 <4.0.0'

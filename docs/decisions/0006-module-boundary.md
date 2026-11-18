@@ -15,4 +15,4 @@
 
 TUI 本轮继续使用现有公开业务包和播放控制器，后续迁移 Session。sync 包直接公开配置、Client、状态与冲突接口；双后端及共享合并已在 TUI 阶段实现，GUI 只接入同一模块。
 
-核心目标平台编译检查不能代替 Linux/Android/macOS c-shared 与 Windows sidecar 的实际运行验证。GUI 入口尚未实现，P0 仍须完成最小端到端验证。
+核心目标平台编译检查不能代替 Linux/Android/macOS c-shared 与 Windows sidecar 的实际运行验证。GUI 已实现 c-shared 入口；实际构建和端到端结果见[完整验收](../17-full-gui-parity.md)。

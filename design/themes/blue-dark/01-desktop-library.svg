@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+<title id="title">零拍桌面 · 曲库与播放队列</title><desc id="desc">零拍图形客户端静态设计预览。所有歌曲、人物、评论和封面均为虚构示例，非已上线功能。</desc>
+<rect x="0" y="0" width="1440" height="960" rx="0" fill="#121921"/>
+<rect x="0" y="0" width="224" height="848" rx="0" fill="#1B242E"/>
+<circle cx="41" cy="47" r="14" fill="#A8CAFF"/>
+<path d="M34 40L34 54" fill="none" stroke="#1B242E" stroke-width="3"/>
+<path d="M42 36L42 58" fill="none" stroke="#1B242E" stroke-width="3"/>
+<path d="M50 43L50 51" fill="none" stroke="#1B242E" stroke-width="3"/>
+<text x="68" y="56" font-family="Noto Sans CJK SC, sans-serif" font-size="26" font-weight="600" text-anchor="start" fill="#E8EFF8">零拍</text>
+<text x="26" y="91" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">音乐，留在你的节奏里。</text>
+<rect x="16" y="126" width="192" height="44" rx="8" fill="#1F426D"/>
+<rect x="16" y="139" width="3" height="18" rx="1" fill="#A8CAFF"/>
+<g transform="translate(32 138) scale(0.8333333333333334)" fill="none" stroke="#A8CAFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v18M9 3v18M14 4l5-1 4 17-5 1z"/></g>
+<text x="64" y="154" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#A8CAFF">曲库</text>
+<g transform="translate(32 190) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20M16 8l-3 5-5 3 3-5z"/></g>
+<text x="64" y="206" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start" fill="#E8EFF8">发现</text>
+<g transform="translate(32 242) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v13H4zM7 8l11-5M8 13v4M12 13h5M12 17h5"/></g>
+<text x="64" y="258" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start" fill="#E8EFF8">播客 / 电台</text>
+<g transform="translate(32 294) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 17v4h16v-4"/></g>
+<text x="64" y="310" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start" fill="#E8EFF8">下载</text>
+<text x="32" y="370" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="start" fill="#B8C6D7">我的歌单</text>
+<g transform="translate(177 354) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></g>
+<g transform="translate(32 394) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21L3 12C-2 5 7 0 12 6C17 0 26 5 21 12z"/></g>
+<text x="64" y="409" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#E8EFF8">喜欢的音乐</text>
+<text x="191" y="409" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">128</text>
+<g transform="translate(32 437) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h13M8 12h13M8 19h13M3 5h1M3 12h1M3 19h1"/></g>
+<text x="64" y="452" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#E8EFF8">夜行电台</text>
+<text x="191" y="452" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">36</text>
+<g transform="translate(32 480) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h13M8 12h13M8 19h13M3 5h1M3 12h1M3 19h1"/></g>
+<text x="64" y="495" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#E8EFF8">慢下来</text>
+<text x="191" y="495" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">24</text>
+<g transform="translate(32 523) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h13M8 12h13M8 19h13M3 5h1M3 12h1M3 19h1"/></g>
+<text x="64" y="538" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#E8EFF8">待听清单</text>
+<text x="191" y="538" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">12</text>
+<path d="M24 724H200" fill="none" stroke="#405266" stroke-width="1"/>
+<circle cx="46.0" cy="763.0" r="18.0" fill="#E9D8DF"/>
+<text x="46.0" y="768.76" font-family="Noto Sans CJK SC, sans-serif" font-size="12.959999999999999" font-weight="500" text-anchor="middle" fill="#A8CAFF">我</text>
+<text x="76" y="760" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="500" text-anchor="start" fill="#E8EFF8">本机曲库</text>
+<text x="76" y="779" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">已连接网易云</text>
+<g transform="translate(181 752) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></g>
+<text x="28" y="820" font-family="Noto Sans CJK SC, sans-serif" font-size="10" font-weight="400" text-anchor="start" fill="#B8C6D7">设计预览 · 虚构示例内容</text>
+<g transform="translate(258 38) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></g>
+<g transform="translate(294 38) scale(0.8333333333333334)" fill="none" stroke="#405266" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4l8 8-8 8"/></g>
+<rect x="338" y="24" width="492" height="44" rx="10" fill="#1B242E" stroke="#405266" stroke-width="1"/>
+<g transform="translate(353 36) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3a7 7 0 1 0 0 14a7 7 0 0 0 0-14M15 15l6 6"/></g>
+<text x="386" y="52" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#B8C6D7">搜索歌曲、视频、歌手</text>
+<text x="805" y="52" font-family="DejaVu Sans Mono, monospace" font-size="14" font-weight="400" text-anchor="start" fill="#B8C6D7">/</text>
+<g transform="translate(1240 37) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a9 9 0 0 1 16-5l2 3M21 2v6h-6M21 14a9 9 0 0 1-16 5l-2-3M3 22v-6h6"/></g>
+<text x="1270" y="52" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="400" text-anchor="start" fill="#B8C6D7">已同步</text>
+<g transform="translate(1384 38) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<rect x="0" y="848" width="1440" height="112" rx="0" fill="#1B242E"/>
+<rect x="0" y="848" width="1440" height="2" rx="0" fill="#405266"/>
+<rect x="0" y="848" width="520" height="2" rx="0" fill="#A8CAFF"/>
+<circle cx="520" cy="849" r="3" fill="#A8CAFF"/>
+<rect x="24" y="872" width="64" height="64" rx="8" fill="#D9E4E5"/>
+<path d="M24 920.0Q52.8 884.8 88 907.2V928Q88 936 80 936H32Q24 936 24 928Z" fill="#B9CFCE"/>
+<circle cx="68.8" cy="888.64" r="6.72" fill="#4C6A73"/>
+<path d="M24 927.04Q56.0 910.4 88 927.04V928Q88 936 80 936H32Q24 936 24 928Z" fill="#4C6A73"/>
+<text x="104" y="895" font-family="Noto Sans CJK SC, sans-serif" font-size="15" font-weight="600" text-anchor="start" fill="#E8EFF8">凌晨一点半</text>
+<text x="104" y="921" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="400" text-anchor="start" fill="#B8C6D7">林屿 · 陈澈</text>
+<g transform="translate(193 908) scale(0.625)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l7 7 7-7"/></g>
+<g transform="translate(290 893) scale(0.875)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21L3 12C-2 5 7 0 12 6C17 0 26 5 21 12z"/></g>
+<g transform="translate(536 893) scale(0.9166666666666666)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3M4 8v7M20 16V9"/></g>
+<g transform="translate(592 891) scale(1.0)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4L7 12l12 8zM4 4v16"/></g>
+<circle cx="668" cy="904" r="25" fill="#A8CAFF"/>
+<g transform="translate(656 892) scale(1.0)" fill="none" stroke="#1B242E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v16M16 4v16"/></g>
+<g transform="translate(720 891) scale(1.0)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l12 8-12 8zM20 4v16"/></g>
+<text x="790" y="909" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">01:42 / 04:36</text>
+<g transform="translate(1080 894) scale(0.9166666666666666)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h4l6-5v16l-6-5H3zM17 8q6 4 0 8"/></g>
+<rect x="1116" y="903" width="82" height="3" rx="2" fill="#405266"/>
+<rect x="1116" y="903" width="56" height="3" rx="2" fill="#B8C6D7"/>
+<circle cx="1172" cy="904" r="4" fill="#B8C6D7"/>
+<text x="1225" y="910" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#A8CAFF">歌词</text>
+<g transform="translate(1294 894) scale(0.9166666666666666)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h13M8 12h13M8 19h13M3 5h1M3 12h1M3 19h1"/></g>
+<text x="1326" y="909" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">12</text>
+<g transform="translate(1382 894) scale(0.8333333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4H4v16h16v-6M14 3h7v7M21 3L10 14"/></g>
+<text x="104" y="943" font-family="Noto Sans CJK SC, sans-serif" font-size="10" font-weight="400" text-anchor="start" fill="#B8C6D7">作者主页  u</text>
+<text x="656" y="946" font-family="Noto Sans CJK SC, sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#B8C6D7">空格 暂停</text>
+<text x="264" y="125" font-family="Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" text-anchor="start" fill="#E8EFF8">曲库</text>
+<text x="264" y="153" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#B8C6D7">每个平台，放进同一份歌单。</text>
+<rect x="264" y="182" width="144" height="144" rx="8" fill="#D9E4E5"/>
+<path d="M264 290.0Q328.8 210.8 408 261.2V318Q408 326 400 326H272Q264 326 264 318Z" fill="#B9CFCE"/>
+<circle cx="364.8" cy="219.44" r="15.12" fill="#4C6A73"/>
+<path d="M264 305.84000000000003Q336.0 268.4 408 305.84000000000003V318Q408 326 400 326H272Q264 326 264 318Z" fill="#4C6A73"/>
+<text x="280" y="210" font-family="Source Han Serif SC, Noto Serif CJK SC, serif" font-size="12" font-weight="500" text-anchor="start" fill="#4C6A73">夜 行</text>
+<text x="432" y="211" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">本地歌单</text>
+<text x="432" y="251" font-family="Source Han Serif SC, Noto Serif CJK SC, serif" font-size="32" font-weight="600" text-anchor="start" fill="#E8EFF8">夜行电台</text>
+<text x="433" y="282" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="400" text-anchor="start" fill="#B8C6D7">36 首 · 2 小时 18 分 · 网易云 / B 站</text>
+<rect x="432" y="302" width="124" height="40" rx="8" fill="#A8CAFF"/>
+<g transform="translate(445 312.0) scale(0.8333333333333334)" fill="none" stroke="#1B242E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3l14 9L7 21z"/></g>
+<text x="504.0" y="327.0" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle" fill="#1B242E">全部播放</text>
+<rect x="568" y="302" width="108" height="40" rx="8" fill="#1B242E" stroke="#405266" stroke-width="1"/>
+<g transform="translate(581 312.0) scale(0.8333333333333334)" fill="none" stroke="#E8EFF8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></g>
+<text x="632.0" y="327.0" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle" fill="#E8EFF8">添加歌曲</text>
+<g transform="translate(706 311) scale(0.9166666666666666)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<path d="M1088 100L1088 814" fill="none" stroke="#405266" stroke-width="1"/>
+<text x="1120" y="127" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="start" fill="#E8EFF8">接下来播放</text>
+<text x="1395" y="127" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">12 首</text>
+<rect x="1120" y="166" width="48" height="48" rx="8" fill="#E8D9D0"/>
+<path d="M1120 202.0Q1141.6 175.6 1168 192.4V206Q1168 214 1160 214H1128Q1120 214 1120 206Z" fill="#C6B1AA"/>
+<circle cx="1153.6" cy="178.48" r="5.04" fill="#9B695E"/>
+<path d="M1120 207.28Q1144.0 194.8 1168 207.28V206Q1168 214 1160 214H1128Q1120 214 1120 206Z" fill="#9B695E"/>
+<text x="1182" y="187" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="500" text-anchor="start" fill="#E8EFF8">晚风经过站台</text>
+<text x="1182" y="208" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">南岸</text>
+<rect x="1120" y="256" width="48" height="48" rx="8" fill="#DAD9E7"/>
+<path d="M1120 292.0Q1141.6 265.6 1168 282.4V296Q1168 304 1160 304H1128Q1120 304 1120 296Z" fill="#B7AEC6"/>
+<circle cx="1153.6" cy="268.48" r="5.04" fill="#686478"/>
+<path d="M1120 297.28Q1144.0 284.8 1168 297.28V296Q1168 304 1160 304H1128Q1120 304 1120 296Z" fill="#686478"/>
+<text x="1182" y="277" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="500" text-anchor="start" fill="#E8EFF8">把日子折成信</text>
+<text x="1182" y="298" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">林屿</text>
+<rect x="1120" y="346" width="48" height="48" rx="8" fill="#D7E0D6"/>
+<path d="M1120 382.0Q1141.6 355.6 1168 372.4V386Q1168 394 1160 394H1128Q1120 394 1120 386Z" fill="#A7BBA6"/>
+<circle cx="1153.6" cy="358.48" r="5.04" fill="#55745B"/>
+<path d="M1120 387.28Q1144.0 374.8 1168 387.28V386Q1168 394 1160 394H1128Q1120 394 1120 386Z" fill="#55745B"/>
+<text x="1182" y="367" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="500" text-anchor="start" fill="#E8EFF8">房间里的小宇宙</text>
+<text x="1182" y="388" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">陈澈</text>
+<rect x="1120" y="436" width="48" height="48" rx="8" fill="#D9E4E5"/>
+<path d="M1120 472.0Q1141.6 445.6 1168 462.4V476Q1168 484 1160 484H1128Q1120 484 1120 476Z" fill="#B9CFCE"/>
+<circle cx="1153.6" cy="448.48" r="5.04" fill="#4C6A73"/>
+<path d="M1120 477.28Q1144.0 464.8 1168 477.28V476Q1168 484 1160 484H1128Q1120 484 1120 476Z" fill="#4C6A73"/>
+<text x="1182" y="457" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="500" text-anchor="start" fill="#E8EFF8">一场缓慢的雨</text>
+<text x="1182" y="478" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">声响档案</text>
+<path d="M1120 557H1400" fill="none" stroke="#405266" stroke-width="1"/>
+<text x="1120" y="594" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="400" text-anchor="start" fill="#B8C6D7">正在播放的作者</text>
+<circle cx="1138.0" cy="634.0" r="18.0" fill="#E9D8DF"/>
+<text x="1138.0" y="639.76" font-family="Noto Sans CJK SC, sans-serif" font-size="12.959999999999999" font-weight="500" text-anchor="middle" fill="#A8CAFF">林</text>
+<text x="1168" y="639" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#E8EFF8">林屿</text>
+<g transform="translate(1370 624) scale(0.7083333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4l8 8-8 8"/></g>
+<circle cx="1138.0" cy="690.0" r="18.0" fill="#DDE6E4"/>
+<text x="1138.0" y="695.76" font-family="Noto Sans CJK SC, sans-serif" font-size="12.959999999999999" font-weight="500" text-anchor="middle" fill="#B8C6D7">陈</text>
+<text x="1168" y="695" font-family="Noto Sans CJK SC, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#E8EFF8">陈澈</text>
+<g transform="translate(1370 680) scale(0.7083333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4l8 8-8 8"/></g>
+<text x="1120" y="752" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">u  选择作者主页</text>
+<rect x="264" y="374" width="60" height="30" rx="15" fill="#1F426D"/>
+<text x="294.0" y="394" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#A8CAFF">全部</text>
+<rect x="334" y="374" width="76" height="30" rx="15" fill="#26313E"/>
+<text x="372.0" y="394" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">网易云</text>
+<rect x="420" y="374" width="62" height="30" rx="15" fill="#26313E"/>
+<text x="451.0" y="394" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">B 站</text>
+<rect x="812" y="374" width="236" height="32" rx="8" fill="#1B242E" stroke="#405266" stroke-width="1"/>
+<g transform="translate(824 382) scale(0.7083333333333334)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3a7 7 0 1 0 0 14a7 7 0 0 0 0-14M15 15l6 6"/></g>
+<text x="853" y="396" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">在歌单中查找</text>
+<text x="288" y="431" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">#</text>
+<text x="326" y="431" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">歌曲 / 作者</text>
+<text x="818" y="431" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">来源</text>
+<text x="978" y="431" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">时长</text>
+<rect x="264" y="447" width="784" height="60" rx="8" fill="#26313E"/>
+<rect x="264" y="463" width="3" height="28" rx="1" fill="#A8CAFF"/>
+<g transform="translate(281 468) scale(0.7083333333333334)" fill="none" stroke="#A8CAFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v16M16 4v16"/></g>
+<text x="326" y="472" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#A8CAFF">凌晨一点半</text>
+<text x="326" y="493" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">林屿 · 陈澈</text>
+<rect x="808" y="462" width="72" height="30" rx="15" fill="#26313E"/>
+<text x="844.0" y="482" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">网易云</text>
+<text x="1000" y="482" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">04:36</text>
+<g transform="translate(1018 469) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<rect x="261" y="508" width="790" height="66" rx="11" fill="none" stroke="#A8CAFF" stroke-width="2"/>
+<text x="289" y="546" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="middle" fill="#B8C6D7">02</text>
+<text x="326" y="536" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#E8EFF8">晚风经过站台</text>
+<text x="326" y="557" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">南岸</text>
+<rect x="808" y="526" width="72" height="30" rx="15" fill="#26313E"/>
+<text x="844.0" y="546" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">B 站</text>
+<text x="1000" y="546" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">05:12</text>
+<g transform="translate(1018 533) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<path d="M278 574H1040" fill="none" stroke="#405266" stroke-width="1"/>
+<text x="289" y="610" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="middle" fill="#B8C6D7">03</text>
+<text x="326" y="600" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#E8EFF8">把日子折成信</text>
+<text x="326" y="621" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">林屿</text>
+<rect x="808" y="590" width="72" height="30" rx="15" fill="#26313E"/>
+<text x="844.0" y="610" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">网易云</text>
+<text x="1000" y="610" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">03:48</text>
+<g transform="translate(1018 597) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<path d="M278 638H1040" fill="none" stroke="#405266" stroke-width="1"/>
+<text x="289" y="674" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="middle" fill="#B8C6D7">04</text>
+<text x="326" y="664" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#E8EFF8">房间里的小宇宙</text>
+<text x="326" y="685" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">陈澈</text>
+<rect x="808" y="654" width="72" height="30" rx="15" fill="#26313E"/>
+<text x="844.0" y="674" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">网易云</text>
+<text x="1000" y="674" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">04:09</text>
+<g transform="translate(1018 661) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<path d="M278 702H1040" fill="none" stroke="#405266" stroke-width="1"/>
+<text x="289" y="738" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="middle" fill="#B8C6D7">05</text>
+<text x="326" y="728" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#E8EFF8">一场缓慢的雨</text>
+<text x="326" y="749" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">声响档案</text>
+<rect x="808" y="718" width="72" height="30" rx="15" fill="#26313E"/>
+<text x="844.0" y="738" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">B 站</text>
+<text x="1000" y="738" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">07:24</text>
+<g transform="translate(1018 725) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<path d="M278 766H1040" fill="none" stroke="#405266" stroke-width="1"/>
+<text x="289" y="802" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="middle" fill="#B8C6D7">06</text>
+<text x="326" y="792" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#E8EFF8">离岛来信</text>
+<text x="326" y="813" font-family="Noto Sans CJK SC, sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#B8C6D7">安禾</text>
+<rect x="808" y="782" width="72" height="30" rx="15" fill="#26313E"/>
+<text x="844.0" y="802" font-family="Noto Sans CJK SC, sans-serif" font-size="12" font-weight="500" text-anchor="middle" fill="#B8C6D7">网易云</text>
+<text x="1000" y="802" font-family="DejaVu Sans Mono, monospace" font-size="11" font-weight="400" text-anchor="end" fill="#B8C6D7">03:56</text>
+<g transform="translate(1018 789) scale(0.75)" fill="none" stroke="#B8C6D7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h1M11 12h1M18 12h1"/></g>
+<path d="M278 830H1040" fill="none" stroke="#405266" stroke-width="1"/>
+</svg>

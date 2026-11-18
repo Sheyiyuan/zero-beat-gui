@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "search.query",
+    "params": {"keyword": "示例", "page": 1, "source": ""}
+  },
+  "result": {
+    "candidates": [
+      {
+        "track": {
+          "id": "netease:186016:1",
+          "source": "netease",
+          "external_id": "186016",
+          "page": 1,
+          "cid": "0",
+          "title": "示例",
+          "artist": "示例作者",
+          "album": "",
+          "duration_ms": 180000,
+          "cover": ""
+        },
+        "play": "0",
+        "vip": false
+      }
+    ],
+    "pages": 2,
+    "has_warning": true,
+    "warning": "部分音源搜索失败：哔哩哔哩"
+  }
+}

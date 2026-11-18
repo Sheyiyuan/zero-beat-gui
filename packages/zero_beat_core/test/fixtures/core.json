@@ -1,0 +1,947 @@
+{
+  "fixtures": [
+    {
+      "name": "download-task",
+      "type": "DownloadTask",
+      "value": {
+        "id": 1,
+        "song": {
+          "id": "bilibili:BV1example:1",
+          "source": "bilibili",
+          "remote_id": "BV1example",
+          "page": 1,
+          "cid": "9223372036854775807",
+          "title": "旧版歌曲",
+          "artist": "UP 主",
+          "album": "",
+          "duration_ms": 123000,
+          "cover": "",
+          "added_at": "2026-11-17T00:09:10.123Z"
+        },
+        "state": "running",
+        "done": "1234",
+        "total": "5678",
+        "path": "",
+        "failed": false
+      }
+    },
+    {
+      "name": "archive",
+      "type": "Archive",
+      "value": {
+        "name": "20261118/deleted-playlists/example.json",
+        "title": "归档歌单"
+      }
+    },
+    {
+      "name": "work",
+      "type": "Work",
+      "value": {
+        "id": "task-1",
+        "action": "sync.now",
+        "state": "running",
+        "message": ""
+      }
+    },
+    {
+      "name": "sync-conflict",
+      "type": "SyncConflict",
+      "value": {
+        "index": 1,
+        "entity": "playlist:1",
+        "title": "歌单",
+        "summary": "本地 2 首，远端 3 首",
+        "both": true
+      }
+    },
+    {
+      "name": "sync-conflicts",
+      "type": "SyncConflictList",
+      "value": {
+        "tx_id": "tx-1",
+        "entities": []
+      }
+    },
+    {
+      "name": "login-qr",
+      "type": "LoginQR",
+      "value": {
+        "key": "session-key",
+        "url": "https://example.invalid/qr"
+      }
+    },
+    {
+      "name": "login-poll",
+      "type": "LoginPoll",
+      "value": {
+        "code": 86101,
+        "message": "等待扫码",
+        "logged_in": false,
+        "expired": false
+      }
+    },
+    {
+      "name": "batch-failure",
+      "type": "BatchFailure",
+      "value": {
+        "song_id": "netease:1:1",
+        "error": "权限不足"
+      }
+    },
+    {
+      "name": "batch-result",
+      "type": "BatchResult",
+      "value": {
+        "succeeded": [
+          "netease:2:1"
+        ],
+        "skipped": [],
+        "failed": [
+          {
+            "song_id": "netease:1:1",
+            "error": "操作失败，请检查来源、账号或歌单权限后重试"
+          }
+        ]
+      }
+    },
+    {
+      "name": "gui-settings",
+      "type": "GUISettings",
+      "value": {
+        "theme": "system",
+        "palette": "zero-red",
+        "accent": "",
+        "close_action": "background",
+        "shortcuts": {},
+        "window": ""
+      }
+    },
+    {
+      "name": "clip",
+      "type": "Clip",
+      "value": {
+        "start_ms": 1234,
+        "end_ms": 4321
+      }
+    },
+    {
+      "name": "preferences",
+      "type": "Preferences",
+      "value": {
+        "volume": 0.8,
+        "comp_db": 0,
+        "auto_gain": true,
+        "quality": "high",
+        "mode": "shuffle",
+        "playing_playlist": "",
+        "local_first": true,
+        "mouse": true
+      }
+    },
+    {
+      "name": "download",
+      "type": "Download",
+      "value": {
+        "song_id": "netease:program:2066770638:1",
+        "path": "/music/episode.m4a",
+        "size": "9223372036854775807",
+        "codec": "aac",
+        "duration_ms": 245000,
+        "created_at": "2026-11-17T00:09:10.123Z"
+      }
+    },
+    {
+      "name": "download-entry-missing-song",
+      "type": "DownloadEntry",
+      "value": {
+        "download": {
+          "song_id": "deleted-song",
+          "path": "",
+          "size": "0",
+          "codec": "",
+          "duration_ms": 0,
+          "created_at": null
+        },
+        "song": null
+      }
+    },
+    {
+      "name": "download-progress",
+      "type": "DownloadProgress",
+      "value": {
+        "done": "9223372036854775807",
+        "total": "9223372036854775807"
+      }
+    },
+    {
+      "name": "download-result",
+      "type": "DownloadResult",
+      "value": {
+        "song": {
+          "id": "bilibili:BV1example:1",
+          "source": "bilibili",
+          "remote_id": "BV1example",
+          "page": 1,
+          "cid": "9223372036854775807",
+          "title": "旧版歌曲",
+          "artist": "UP 主",
+          "album": "",
+          "duration_ms": 123000,
+          "cover": "",
+          "added_at": "2026-11-17T00:09:10.123Z"
+        },
+        "path": "",
+        "size": "0",
+        "has_error": true
+      }
+    },
+    {
+      "name": "lyric-binding",
+      "type": "LyricBinding",
+      "value": {
+        "kind": "lrclib",
+        "source": "",
+        "external_id": "",
+        "page": 0,
+        "cid": "0",
+        "lrclib_id": "9223372036854775807",
+        "path": "",
+        "song_id": "",
+        "title": "歌词",
+        "artist": "",
+        "duration_ms": 123000,
+        "offset_ms": -456,
+        "bound_at": "2026-11-17T00:09:10.000Z"
+      }
+    },
+    {
+      "name": "annotation",
+      "type": "SongAnnotation",
+      "value": {
+        "song_id": "netease:program:2066770638:1",
+        "lyric_offset_ms": -456,
+        "comp_db": 1.25,
+        "clip_start_ms": 1234,
+        "clip_end_ms": 4321,
+        "lyric_bind": {
+          "kind": "lrclib",
+          "source": "",
+          "external_id": "",
+          "page": 0,
+          "cid": "0",
+          "lrclib_id": "9223372036854775807",
+          "path": "",
+          "song_id": "",
+          "title": "歌词",
+          "artist": "",
+          "duration_ms": 123000,
+          "offset_ms": -456,
+          "bound_at": "2026-11-17T00:09:10.000Z"
+        }
+      }
+    },
+    {
+      "name": "lyrics-result",
+      "type": "LyricsResult",
+      "value": {
+        "lines": [
+          {
+            "start_ms": 1234,
+            "text": "在路上",
+            "translation": ""
+          }
+        ],
+        "offset_ms": -456,
+        "offset_key": "portable",
+        "source": "LRCLIB",
+        "bound": true,
+        "degraded": false,
+        "has_warning": false,
+        "binding": {
+          "kind": "lrclib",
+          "source": "",
+          "external_id": "",
+          "page": 0,
+          "cid": "0",
+          "lrclib_id": "9223372036854775807",
+          "path": "",
+          "song_id": "",
+          "title": "歌词",
+          "artist": "",
+          "duration_ms": 123000,
+          "offset_ms": -456,
+          "bound_at": "2026-11-17T00:09:10.000Z"
+        },
+        "binding_kind": "portable"
+      }
+    },
+    {
+      "name": "lyric-candidate",
+      "type": "LyricCandidate",
+      "value": {
+        "kind": "lrclib",
+        "source": "",
+        "external_id": "",
+        "page": 0,
+        "cid": "0",
+        "lrclib_id": "9223372036854775807",
+        "path": "",
+        "song_id": "",
+        "title": "",
+        "artist": "",
+        "duration_ms": 123000,
+        "has_synced": true,
+        "known": true,
+        "mark": ""
+      }
+    },
+    {
+      "name": "lyric-preview",
+      "type": "LyricPreview",
+      "value": {
+        "lines": [
+          {
+            "start_ms": 0,
+            "text": "歌词",
+            "translation": ""
+          }
+        ],
+        "label": "LRCLIB",
+        "count": 1,
+        "binding": {
+          "kind": "lrclib",
+          "source": "",
+          "external_id": "",
+          "page": 0,
+          "cid": "0",
+          "lrclib_id": "9223372036854775807",
+          "path": "",
+          "song_id": "",
+          "title": "歌词",
+          "artist": "",
+          "duration_ms": 123000,
+          "offset_ms": -456,
+          "bound_at": "2026-11-17T00:09:10.000Z"
+        }
+      }
+    },
+    {
+      "name": "merged-search",
+      "type": "SearchResult",
+      "value": {
+        "candidates": [
+          {
+            "track": {
+              "id": "netease:program:2066770638:1",
+              "source": "netease",
+              "external_id": "program:2066770638",
+              "page": 1,
+              "cid": "9223372036854775807",
+              "title": "夜间节目",
+              "artist": "播客主播",
+              "album": "电台",
+              "duration_ms": 245000,
+              "cover": "https://example.invalid/cover.jpg"
+            },
+            "play": "9223372036854775807",
+            "vip": true
+          }
+        ],
+        "pages": 3,
+        "has_warning": true
+      }
+    },
+    {
+      "name": "library-scan",
+      "type": "LibraryScan",
+      "value": {
+        "playlist": {
+          "id": "folder-1",
+          "source": "",
+          "title": "",
+          "kind": "folder",
+          "remote_id": "",
+          "count": 0,
+          "frozen": false,
+          "sync_excluded": true,
+          "root_path": "",
+          "scan_status": "",
+          "has_scan_error": false,
+          "scanned_at": null,
+          "created_at": null
+        },
+        "subdirs": 0,
+        "scanned": 4,
+        "added": 2,
+        "reused": 1,
+        "missing": 1,
+        "warning_count": 1
+      }
+    },
+    {
+      "name": "all-capabilities-and-future-bit",
+      "type": "SourceCapabilities",
+      "value": {
+        "names": [
+          "search",
+          "multi_part",
+          "remote_playlists",
+          "official_lyrics",
+          "quality_select",
+          "lossless",
+          "daily_recommendations",
+          "playlist_write",
+          "account",
+          "comments",
+          "related",
+          "browse"
+        ],
+        "unknown_bits": "2147483648"
+      }
+    },
+    {
+      "name": "source-summary",
+      "type": "SourceInfo",
+      "value": {
+        "id": "netease",
+        "name": "网易云",
+        "mark": "网",
+        "capabilities": {
+          "names": [
+            "account",
+            "browse"
+          ],
+          "unknown_bits": "0"
+        },
+        "user": {
+          "id": "32953014",
+          "name": "听众",
+          "avatar": "",
+          "logged_in": true
+        }
+      }
+    },
+    {
+      "name": "user",
+      "type": "User",
+      "value": {
+        "id": "9223372036854775807",
+        "name": "听众",
+        "avatar": "https://example.invalid/avatar",
+        "logged_in": true
+      }
+    },
+    {
+      "name": "program-ref",
+      "type": "TrackRef",
+      "value": {
+        "source": "netease",
+        "external_id": "program:2066770638",
+        "page": 1,
+        "cid": "9223372036854775807"
+      }
+    },
+    {
+      "name": "program-track",
+      "type": "Track",
+      "value": {
+        "id": "netease:program:2066770638:1",
+        "source": "netease",
+        "external_id": "program:2066770638",
+        "page": 1,
+        "cid": "9223372036854775807",
+        "title": "夜间节目",
+        "artist": "播客主播",
+        "album": "电台",
+        "duration_ms": 245000,
+        "cover": "https://example.invalid/cover.jpg"
+      }
+    },
+    {
+      "name": "legacy-song",
+      "type": "Song",
+      "value": {
+        "id": "bilibili:BV1example:1",
+        "source": "bilibili",
+        "remote_id": "BV1example",
+        "page": 1,
+        "cid": "9223372036854775807",
+        "title": "旧版歌曲",
+        "artist": "UP 主",
+        "album": "",
+        "duration_ms": 123000,
+        "cover": "",
+        "added_at": "2026-11-17T00:09:10.123Z"
+      }
+    },
+    {
+      "name": "zero-song-time",
+      "type": "Song",
+      "value": {
+        "id": "local:file-1:1",
+        "source": "local",
+        "remote_id": "file-1",
+        "page": 1,
+        "cid": "0",
+        "title": "",
+        "artist": "",
+        "album": "",
+        "duration_ms": 0,
+        "cover": "",
+        "added_at": null
+      }
+    },
+    {
+      "name": "candidate",
+      "type": "Candidate",
+      "value": {
+        "track": {
+          "id": "netease:program:2066770638:1",
+          "source": "netease",
+          "external_id": "program:2066770638",
+          "page": 1,
+          "cid": "9223372036854775807",
+          "title": "夜间节目",
+          "artist": "播客主播",
+          "album": "电台",
+          "duration_ms": 245000,
+          "cover": "https://example.invalid/cover.jpg"
+        },
+        "play": "9223372036854775807",
+        "vip": true
+      }
+    },
+    {
+      "name": "search",
+      "type": "SearchPage",
+      "value": {
+        "candidates": [
+          {
+            "track": {
+              "id": "netease:program:2066770638:1",
+              "source": "netease",
+              "external_id": "program:2066770638",
+              "page": 1,
+              "cid": "9223372036854775807",
+              "title": "夜间节目",
+              "artist": "播客主播",
+              "album": "电台",
+              "duration_ms": 245000,
+              "cover": "https://example.invalid/cover.jpg"
+            },
+            "play": "9223372036854775807",
+            "vip": true
+          }
+        ],
+        "page": 1,
+        "pages": 3
+      }
+    },
+    {
+      "name": "related",
+      "type": "RelatedPage",
+      "value": {
+        "candidates": [
+          {
+            "track": {
+              "id": "netease:program:2066770638:1",
+              "source": "netease",
+              "external_id": "program:2066770638",
+              "page": 1,
+              "cid": "9223372036854775807",
+              "title": "夜间节目",
+              "artist": "播客主播",
+              "album": "电台",
+              "duration_ms": 245000,
+              "cover": "https://example.invalid/cover.jpg"
+            },
+            "play": "9223372036854775807",
+            "vip": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty-related",
+      "type": "RelatedPage",
+      "value": {
+        "candidates": []
+      }
+    },
+    {
+      "name": "local-only-playlist",
+      "type": "Playlist",
+      "value": {
+        "id": "local-1",
+        "source": "",
+        "title": "私藏",
+        "kind": "local",
+        "remote_id": "",
+        "count": 3,
+        "frozen": false,
+        "sync_excluded": true,
+        "root_path": "",
+        "scan_status": "",
+        "has_scan_error": false,
+        "scanned_at": null,
+        "created_at": "2026-11-17T00:09:10.000Z"
+      }
+    },
+    {
+      "name": "remote-playlist",
+      "type": "RemotePlaylist",
+      "value": {
+        "id": "netease-42",
+        "source": "netease",
+        "remote_id": "42",
+        "title": "收藏",
+        "count": 7
+      }
+    },
+    {
+      "name": "queue",
+      "type": "QueueSnapshot",
+      "value": {
+        "ids": [
+          "netease:program:2066770638:1"
+        ],
+        "index": 0,
+        "position_ms": 1234
+      }
+    },
+    {
+      "name": "empty-queue",
+      "type": "QueueSnapshot",
+      "value": {
+        "ids": [],
+        "index": -1,
+        "position_ms": 0
+      }
+    },
+    {
+      "name": "player",
+      "type": "PlaybackSnapshot",
+      "value": {
+        "queue": [
+          {
+            "id": "bilibili:BV1example:1",
+            "source": "bilibili",
+            "remote_id": "BV1example",
+            "page": 1,
+            "cid": "9223372036854775807",
+            "title": "旧版歌曲",
+            "artist": "UP 主",
+            "album": "",
+            "duration_ms": 123000,
+            "cover": "",
+            "added_at": "2026-11-17T00:09:10.123Z"
+          }
+        ],
+        "index": 0,
+        "current": {
+          "id": "bilibili:BV1example:1",
+          "source": "bilibili",
+          "remote_id": "BV1example",
+          "page": 1,
+          "cid": "9223372036854775807",
+          "title": "旧版歌曲",
+          "artist": "UP 主",
+          "album": "",
+          "duration_ms": 123000,
+          "cover": "",
+          "added_at": "2026-11-17T00:09:10.123Z"
+        },
+        "state": "paused",
+        "position_ms": 1234,
+        "duration_ms": 123000,
+        "mode": "shuffle",
+        "volume": 0.75,
+        "comp_db": -2.5,
+        "song_comp_db": 1.25,
+        "auto_gain": true,
+        "muted": true,
+        "awaiting": true,
+        "request_id": 17,
+        "sleep_until": "2026-11-17T00:09:10.123Z",
+        "quality": "lossless"
+      }
+    },
+    {
+      "name": "idle-player",
+      "type": "PlaybackSnapshot",
+      "value": {
+        "queue": [],
+        "index": -1,
+        "current": null,
+        "state": "idle",
+        "position_ms": 0,
+        "duration_ms": 0,
+        "mode": "list_loop",
+        "volume": 0,
+        "comp_db": 0,
+        "song_comp_db": 0,
+        "auto_gain": false,
+        "muted": false,
+        "awaiting": false,
+        "request_id": 0,
+        "sleep_until": null,
+        "quality": "auto"
+      }
+    },
+    {
+      "name": "future-player",
+      "type": "PlaybackSnapshot",
+      "value": {
+        "queue": [],
+        "index": 0,
+        "current": null,
+        "state": "unknown:99",
+        "position_ms": 0,
+        "duration_ms": 0,
+        "mode": "unknown:99",
+        "volume": 0,
+        "comp_db": 0,
+        "song_comp_db": 0,
+        "auto_gain": false,
+        "muted": false,
+        "awaiting": false,
+        "request_id": 0,
+        "sleep_until": null,
+        "quality": "unknown:99"
+      }
+    },
+    {
+      "name": "stream-info",
+      "type": "StreamInfo",
+      "value": {
+        "codec": "aac",
+        "duration_ms": 245123,
+        "expires_at": "2026-11-17T00:09:10.123Z",
+        "quality": "192k",
+        "clip_start_ms": 1234,
+        "clip_end_ms": 4321
+      }
+    },
+    {
+      "name": "engine-stream",
+      "type": "EngineStream",
+      "value": {
+        "url": "https://example.invalid/audio",
+        "headers": {
+          "Referer": "https://www.bilibili.com/"
+        },
+        "codec": "aac",
+        "duration_ms": 245123,
+        "expires_at": "2026-11-17T00:09:10.123Z",
+        "quality": "192k",
+        "clip_start_ms": 1234,
+        "clip_end_ms": 4321
+      }
+    },
+    {
+      "name": "source-stream-duration",
+      "type": "StreamInfo",
+      "value": {
+        "codec": "",
+        "duration_ms": 245123,
+        "expires_at": null,
+        "quality": "",
+        "clip_start_ms": 0,
+        "clip_end_ms": 0
+      }
+    },
+    {
+      "name": "lyric",
+      "type": "LyricLine",
+      "value": {
+        "start_ms": 1234,
+        "text": "在路上",
+        "translation": "On the road"
+      }
+    },
+    {
+      "name": "radio-ref",
+      "type": "BrowseRef",
+      "value": {
+        "source": "netease",
+        "kind": "radio",
+        "id": "9223372036854775807"
+      }
+    },
+    {
+      "name": "radio-entry",
+      "type": "BrowseEntry",
+      "value": {
+        "title": "四只烤翅",
+        "subtitle": "播客电台",
+        "ref": {
+          "source": "netease",
+          "kind": "radio",
+          "id": "9223372036854775807"
+        },
+        "track": null
+      }
+    },
+    {
+      "name": "program-entry",
+      "type": "BrowseEntry",
+      "value": {
+        "title": "夜间节目",
+        "subtitle": "播客主播",
+        "ref": null,
+        "track": {
+          "id": "netease:program:2066770638:1",
+          "source": "netease",
+          "external_id": "program:2066770638",
+          "page": 1,
+          "cid": "9223372036854775807",
+          "title": "夜间节目",
+          "artist": "播客主播",
+          "album": "电台",
+          "duration_ms": 245000,
+          "cover": "https://example.invalid/cover.jpg"
+        }
+      }
+    },
+    {
+      "name": "radio-page",
+      "type": "BrowsePage",
+      "value": {
+        "title": "四只烤翅",
+        "description": "电台详情",
+        "cover": "",
+        "notice": "",
+        "entries": [
+          {
+            "title": "夜间节目",
+            "subtitle": "播客主播",
+            "ref": null,
+            "track": {
+              "id": "netease:program:2066770638:1",
+              "source": "netease",
+              "external_id": "program:2066770638",
+              "page": 1,
+              "cid": "9223372036854775807",
+              "title": "夜间节目",
+              "artist": "播客主播",
+              "album": "电台",
+              "duration_ms": 245000,
+              "cover": "https://example.invalid/cover.jpg"
+            }
+          }
+        ],
+        "page": 1,
+        "has_more": true
+      }
+    },
+    {
+      "name": "profiles",
+      "type": "ProfileList",
+      "value": {
+        "entries": [
+          {
+            "title": "主播",
+            "subtitle": "",
+            "ref": {
+              "source": "netease",
+              "kind": "user",
+              "id": "32953014"
+            },
+            "track": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "comment",
+      "type": "Comment",
+      "value": {
+        "id": "9223372036854775807",
+        "author": "听众",
+        "author_ref": {
+          "source": "netease",
+          "kind": "user",
+          "id": "32953014"
+        },
+        "avatar": "",
+        "content": "好听\n第二行",
+        "likes": "9223372036854775807",
+        "created_at": "2026-11-17T00:09:10.123Z",
+        "reply_count": 2
+      }
+    },
+    {
+      "name": "comments",
+      "type": "CommentPage",
+      "value": {
+        "comments": [
+          {
+            "id": "9223372036854775807",
+            "author": "听众",
+            "author_ref": {
+              "source": "netease",
+              "kind": "user",
+              "id": "32953014"
+            },
+            "avatar": "",
+            "content": "好听\n第二行",
+            "likes": "9223372036854775807",
+            "created_at": "2026-11-17T00:09:10.123Z",
+            "reply_count": 2
+          }
+        ],
+        "page": 1,
+        "has_more": false,
+        "notice": "未登录预览"
+      }
+    },
+    {
+      "name": "anonymous-comment",
+      "type": "Comment",
+      "value": {
+        "id": "0",
+        "author": "",
+        "author_ref": null,
+        "avatar": "",
+        "content": "未知作者",
+        "likes": "0",
+        "created_at": null,
+        "reply_count": 0
+      }
+    },
+    {
+      "name": "sync-config",
+      "type": "SyncConfig",
+      "value": {
+        "backend": "auto",
+        "remote": "https://example.invalid/owner/repo.git",
+        "branch": "main",
+        "auto": true,
+        "sync_accounts": false
+      }
+    },
+    {
+      "name": "sync-status",
+      "type": "SyncStatus",
+      "value": {
+        "requested_backend": "auto",
+        "actual_backend": "gogit",
+        "configured": true,
+        "remote": "https://example.invalid/owner/repo.git",
+        "branch": "main",
+        "auto": true,
+        "sync_accounts": false,
+        "key_cached": false,
+        "key_matches_repo": false,
+        "key_version": 0,
+        "last_sync_at": "2026-11-17T00:09:10.123Z",
+        "has_error": true,
+        "has_key_issue": false,
+        "conflict_tx": "tx-42",
+        "conflicts": 2,
+        "warning_count": 1
+      }
+    }
+  ],
+  "schema_version": 1
+}

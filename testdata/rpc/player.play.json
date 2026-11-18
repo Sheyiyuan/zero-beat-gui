@@ -1,0 +1,13 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 9,
+    "method": "player.play",
+    "params": {
+      "song_id": "bilibili:BV1demo:1",
+      "queue_index": -1,
+      "start_at_ms": 0
+    }
+  },
+  "result": {"request_id": 4, "started": true}
+}

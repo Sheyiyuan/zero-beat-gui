@@ -1,0 +1,2260 @@
+{
+  "capabilities": [
+    {
+      "Bit": 1,
+      "Name": "search"
+    },
+    {
+      "Bit": 2,
+      "Name": "multi_part"
+    },
+    {
+      "Bit": 4,
+      "Name": "remote_playlists"
+    },
+    {
+      "Bit": 8,
+      "Name": "official_lyrics"
+    },
+    {
+      "Bit": 16,
+      "Name": "quality_select"
+    },
+    {
+      "Bit": 32,
+      "Name": "lossless"
+    },
+    {
+      "Bit": 64,
+      "Name": "daily_recommendations"
+    },
+    {
+      "Bit": 128,
+      "Name": "playlist_write"
+    },
+    {
+      "Bit": 256,
+      "Name": "account"
+    },
+    {
+      "Bit": 512,
+      "Name": "comments"
+    },
+    {
+      "Bit": 1024,
+      "Name": "related"
+    },
+    {
+      "Bit": 2048,
+      "Name": "browse"
+    }
+  ],
+  "core_shapes": {
+    "github.com/sheyiyuan/zero-beat-core/app.DownloadResult": [
+      {
+        "name": "Song",
+        "type": "store.Song"
+      },
+      {
+        "name": "Path",
+        "type": "string"
+      },
+      {
+        "name": "Size",
+        "type": "int64"
+      },
+      {
+        "name": "Err",
+        "type": "error"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/app.LibraryScan": [
+      {
+        "name": "Playlist",
+        "type": "store.Playlist"
+      },
+      {
+        "name": "Subdirs",
+        "type": "int"
+      },
+      {
+        "name": "Scanned",
+        "type": "int"
+      },
+      {
+        "name": "Added",
+        "type": "int"
+      },
+      {
+        "name": "Reused",
+        "type": "int"
+      },
+      {
+        "name": "Missing",
+        "type": "int"
+      },
+      {
+        "name": "Warnings",
+        "type": "[]string"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/app.LyricCandidate": [
+      {
+        "name": "Kind",
+        "type": "string"
+      },
+      {
+        "name": "Source",
+        "type": "source.ID"
+      },
+      {
+        "name": "ExternalID",
+        "type": "string"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "CID",
+        "type": "int64"
+      },
+      {
+        "name": "LRCLIBID",
+        "type": "int64"
+      },
+      {
+        "name": "Path",
+        "type": "string"
+      },
+      {
+        "name": "SongID",
+        "type": "string"
+      },
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Artist",
+        "type": "string"
+      },
+      {
+        "name": "Duration",
+        "type": "int"
+      },
+      {
+        "name": "HasSynced",
+        "type": "bool"
+      },
+      {
+        "name": "Known",
+        "type": "bool"
+      },
+      {
+        "name": "Mark",
+        "type": "string"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/app.LyricPreview": [
+      {
+        "name": "Lines",
+        "type": "[]lyrics.Line"
+      },
+      {
+        "name": "Label",
+        "type": "string"
+      },
+      {
+        "name": "Count",
+        "type": "int"
+      },
+      {
+        "name": "Binding",
+        "type": "store.LyricBinding"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/app.LyricsResult": [
+      {
+        "name": "Lines",
+        "type": "[]lyrics.Line"
+      },
+      {
+        "name": "OffsetMS",
+        "type": "int"
+      },
+      {
+        "name": "OffsetKey",
+        "type": "store.BindingScope"
+      },
+      {
+        "name": "Source",
+        "type": "string"
+      },
+      {
+        "name": "Bound",
+        "type": "bool"
+      },
+      {
+        "name": "Degraded",
+        "type": "bool"
+      },
+      {
+        "name": "Warning",
+        "type": "string"
+      },
+      {
+        "name": "Binding",
+        "type": "*store.LyricBinding"
+      },
+      {
+        "name": "BindingKind",
+        "type": "store.BindingScope"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/app.Preferences": [
+      {
+        "name": "Volume",
+        "type": "float64"
+      },
+      {
+        "name": "CompDB",
+        "type": "float64"
+      },
+      {
+        "name": "AutoGain",
+        "type": "bool"
+      },
+      {
+        "name": "Quality",
+        "type": "source.Quality"
+      },
+      {
+        "name": "Mode",
+        "type": "int"
+      },
+      {
+        "name": "PlayingPlaylist",
+        "type": "string"
+      },
+      {
+        "name": "LocalFirst",
+        "type": "bool"
+      },
+      {
+        "name": "Mouse",
+        "type": "bool"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/app.SearchResult": [
+      {
+        "name": "Candidates",
+        "type": "[]source.Candidate"
+      },
+      {
+        "name": "Pages",
+        "type": "int"
+      },
+      {
+        "name": "Warn",
+        "type": "error"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/download.Progress": [
+      {
+        "name": "Done",
+        "type": "int64"
+      },
+      {
+        "name": "Total",
+        "type": "int64"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/lyrics.Line": [
+      {
+        "name": "StartMS",
+        "type": "int"
+      },
+      {
+        "name": "Text",
+        "type": "string"
+      },
+      {
+        "name": "Translation",
+        "type": "string"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/media.Stream": [
+      {
+        "name": "URL",
+        "type": "string"
+      },
+      {
+        "name": "Headers",
+        "type": "map[string]string"
+      },
+      {
+        "name": "Codec",
+        "type": "string"
+      },
+      {
+        "name": "DurationMS",
+        "type": "int64"
+      },
+      {
+        "name": "ExpiresAt",
+        "type": "time.Time"
+      },
+      {
+        "name": "Quality",
+        "type": "string"
+      },
+      {
+        "name": "ClipStartMS",
+        "type": "int64"
+      },
+      {
+        "name": "ClipEndMS",
+        "type": "int64"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/player.State": [
+      {
+        "name": "Queue",
+        "type": "[]store.Song"
+      },
+      {
+        "name": "Index",
+        "type": "int"
+      },
+      {
+        "name": "Current",
+        "type": "*store.Song"
+      },
+      {
+        "name": "PlaybackState",
+        "type": "media.State"
+      },
+      {
+        "name": "Position",
+        "type": "time.Duration"
+      },
+      {
+        "name": "Duration",
+        "type": "time.Duration"
+      },
+      {
+        "name": "Mode",
+        "type": "player.Mode"
+      },
+      {
+        "name": "Volume",
+        "type": "float64"
+      },
+      {
+        "name": "CompDB",
+        "type": "float64"
+      },
+      {
+        "name": "SongCompDB",
+        "type": "float64"
+      },
+      {
+        "name": "AutoGain",
+        "type": "bool"
+      },
+      {
+        "name": "Muted",
+        "type": "bool"
+      },
+      {
+        "name": "ResumeAt",
+        "type": "time.Duration"
+      },
+      {
+        "name": "Retry",
+        "type": "int"
+      },
+      {
+        "name": "Awaiting",
+        "type": "bool"
+      },
+      {
+        "name": "Request",
+        "type": "int"
+      },
+      {
+        "name": "Prefetch",
+        "type": "player.Prefetch"
+      },
+      {
+        "name": "ShuffleBase",
+        "type": "[]store.Song"
+      },
+      {
+        "name": "ShuffleBaseIdx",
+        "type": "int"
+      },
+      {
+        "name": "SleepUntil",
+        "type": "time.Time"
+      },
+      {
+        "name": "SleepSlot",
+        "type": "int"
+      },
+      {
+        "name": "Quality",
+        "type": "source.Quality"
+      },
+      {
+        "name": "LastPersist",
+        "type": "time.Time"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.BrowseEntry": [
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Subtitle",
+        "type": "string"
+      },
+      {
+        "name": "Ref",
+        "type": "source.BrowseRef"
+      },
+      {
+        "name": "Track",
+        "type": "*source.Track"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.BrowsePage": [
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Description",
+        "type": "string"
+      },
+      {
+        "name": "Cover",
+        "type": "string"
+      },
+      {
+        "name": "Notice",
+        "type": "string"
+      },
+      {
+        "name": "Entries",
+        "type": "[]source.BrowseEntry"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "HasMore",
+        "type": "bool"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.BrowseRef": [
+      {
+        "name": "Source",
+        "type": "source.ID"
+      },
+      {
+        "name": "Kind",
+        "type": "source.BrowseKind"
+      },
+      {
+        "name": "ID",
+        "type": "string"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.Candidate": [
+      {
+        "name": "Track",
+        "type": "source.Track"
+      },
+      {
+        "name": "Play",
+        "type": "int64"
+      },
+      {
+        "name": "VIP",
+        "type": "bool"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.Comment": [
+      {
+        "name": "ID",
+        "type": "string"
+      },
+      {
+        "name": "Author",
+        "type": "string"
+      },
+      {
+        "name": "AuthorRef",
+        "type": "source.BrowseRef"
+      },
+      {
+        "name": "Avatar",
+        "type": "string"
+      },
+      {
+        "name": "Content",
+        "type": "string"
+      },
+      {
+        "name": "Likes",
+        "type": "int64"
+      },
+      {
+        "name": "CreatedAt",
+        "type": "time.Time"
+      },
+      {
+        "name": "ReplyCount",
+        "type": "int"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.CommentPage": [
+      {
+        "name": "Comments",
+        "type": "[]source.Comment"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "HasMore",
+        "type": "bool"
+      },
+      {
+        "name": "Notice",
+        "type": "string"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.Playlist": [
+      {
+        "name": "ID",
+        "type": "string"
+      },
+      {
+        "name": "Source",
+        "type": "source.ID"
+      },
+      {
+        "name": "RemoteID",
+        "type": "string"
+      },
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Count",
+        "type": "int"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.Ref": [
+      {
+        "name": "Source",
+        "type": "source.ID"
+      },
+      {
+        "name": "ExternalID",
+        "type": "string"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "CID",
+        "type": "int64"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.SearchPage": [
+      {
+        "name": "Candidates",
+        "type": "[]source.Candidate"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "Pages",
+        "type": "int"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.Stream": [
+      {
+        "name": "URL",
+        "type": "string"
+      },
+      {
+        "name": "Headers",
+        "type": "map[string]string"
+      },
+      {
+        "name": "Codec",
+        "type": "string"
+      },
+      {
+        "name": "Duration",
+        "type": "time.Duration"
+      },
+      {
+        "name": "ExpiresAt",
+        "type": "time.Time"
+      },
+      {
+        "name": "Quality",
+        "type": "string"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.Track": [
+      {
+        "name": "Source",
+        "type": "source.ID"
+      },
+      {
+        "name": "ExternalID",
+        "type": "string"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "CID",
+        "type": "int64"
+      },
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Artist",
+        "type": "string"
+      },
+      {
+        "name": "Album",
+        "type": "string"
+      },
+      {
+        "name": "Duration",
+        "type": "int"
+      },
+      {
+        "name": "Cover",
+        "type": "string"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/source.User": [
+      {
+        "name": "ID",
+        "type": "string"
+      },
+      {
+        "name": "Name",
+        "type": "string"
+      },
+      {
+        "name": "Avatar",
+        "type": "string"
+      },
+      {
+        "name": "LoggedIn",
+        "type": "bool"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.Clip": [
+      {
+        "name": "StartMS",
+        "type": "int64"
+      },
+      {
+        "name": "EndMS",
+        "type": "int64"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.Download": [
+      {
+        "name": "SongID",
+        "type": "string"
+      },
+      {
+        "name": "Path",
+        "type": "string"
+      },
+      {
+        "name": "Size",
+        "type": "int64"
+      },
+      {
+        "name": "Codec",
+        "type": "string"
+      },
+      {
+        "name": "DurationMS",
+        "type": "int64"
+      },
+      {
+        "name": "CreatedAt",
+        "type": "time.Time"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.DownloadEntry": [
+      {
+        "name": "Download",
+        "type": "store.Download"
+      },
+      {
+        "name": "Song",
+        "type": "store.Song"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.LyricBinding": [
+      {
+        "name": "Kind",
+        "type": "string"
+      },
+      {
+        "name": "Source",
+        "type": "string"
+      },
+      {
+        "name": "ExternalID",
+        "type": "string"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "CID",
+        "type": "int64"
+      },
+      {
+        "name": "LRCLIBID",
+        "type": "int64"
+      },
+      {
+        "name": "Path",
+        "type": "string"
+      },
+      {
+        "name": "SongID",
+        "type": "string"
+      },
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Artist",
+        "type": "string"
+      },
+      {
+        "name": "Duration",
+        "type": "int"
+      },
+      {
+        "name": "OffsetMS",
+        "type": "int"
+      },
+      {
+        "name": "BoundAt",
+        "type": "int64"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.Playlist": [
+      {
+        "name": "ID",
+        "type": "string"
+      },
+      {
+        "name": "Source",
+        "type": "string"
+      },
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Kind",
+        "type": "string"
+      },
+      {
+        "name": "RemoteID",
+        "type": "string"
+      },
+      {
+        "name": "Count",
+        "type": "int"
+      },
+      {
+        "name": "Frozen",
+        "type": "bool"
+      },
+      {
+        "name": "SyncExcluded",
+        "type": "bool"
+      },
+      {
+        "name": "RootPath",
+        "type": "string"
+      },
+      {
+        "name": "ScanStatus",
+        "type": "string"
+      },
+      {
+        "name": "ScanError",
+        "type": "string"
+      },
+      {
+        "name": "ScannedAt",
+        "type": "int64"
+      },
+      {
+        "name": "CreatedAt",
+        "type": "int64"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.QueueState": [
+      {
+        "name": "IDs",
+        "type": "[]string"
+      },
+      {
+        "name": "Index",
+        "type": "int"
+      },
+      {
+        "name": "Position",
+        "type": "int64"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.Song": [
+      {
+        "name": "ID",
+        "type": "string"
+      },
+      {
+        "name": "Source",
+        "type": "string"
+      },
+      {
+        "name": "RemoteID",
+        "type": "string"
+      },
+      {
+        "name": "BVID",
+        "type": "string"
+      },
+      {
+        "name": "Page",
+        "type": "int"
+      },
+      {
+        "name": "CID",
+        "type": "int64"
+      },
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Artist",
+        "type": "string"
+      },
+      {
+        "name": "Album",
+        "type": "string"
+      },
+      {
+        "name": "Duration",
+        "type": "int"
+      },
+      {
+        "name": "Cover",
+        "type": "string"
+      },
+      {
+        "name": "AddedAt",
+        "type": "time.Time"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/store.SongAnnotation": [
+      {
+        "name": "SongID",
+        "type": "string"
+      },
+      {
+        "name": "LyricOffsetMS",
+        "type": "int"
+      },
+      {
+        "name": "CompDB",
+        "type": "float64"
+      },
+      {
+        "name": "ClipStartMS",
+        "type": "int64"
+      },
+      {
+        "name": "ClipEndMS",
+        "type": "int64"
+      },
+      {
+        "name": "LyricBind",
+        "type": "*store.LyricBinding"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/sync.Config": [
+      {
+        "name": "Backend",
+        "type": "sync.Backend"
+      },
+      {
+        "name": "SSHKey",
+        "type": "string"
+      },
+      {
+        "name": "KnownHosts",
+        "type": "string"
+      },
+      {
+        "name": "Remote",
+        "type": "string"
+      },
+      {
+        "name": "Branch",
+        "type": "string"
+      },
+      {
+        "name": "Auto",
+        "type": "bool"
+      },
+      {
+        "name": "SyncAccounts",
+        "type": "bool"
+      }
+    ],
+    "github.com/sheyiyuan/zero-beat-core/sync.Status": [
+      {
+        "name": "RequestedBackend",
+        "type": "sync.Backend"
+      },
+      {
+        "name": "ActualBackend",
+        "type": "sync.Backend"
+      },
+      {
+        "name": "Configured",
+        "type": "bool"
+      },
+      {
+        "name": "Remote",
+        "type": "string"
+      },
+      {
+        "name": "Branch",
+        "type": "string"
+      },
+      {
+        "name": "Auth",
+        "type": "string"
+      },
+      {
+        "name": "AuthHint",
+        "type": "string"
+      },
+      {
+        "name": "Auto",
+        "type": "bool"
+      },
+      {
+        "name": "SyncAccounts",
+        "type": "bool"
+      },
+      {
+        "name": "KeyCached",
+        "type": "bool"
+      },
+      {
+        "name": "KeyMatchesRepo",
+        "type": "bool"
+      },
+      {
+        "name": "KeyVersion",
+        "type": "int"
+      },
+      {
+        "name": "LastSyncAt",
+        "type": "time.Time"
+      },
+      {
+        "name": "LastResult",
+        "type": "string"
+      },
+      {
+        "name": "LastError",
+        "type": "string"
+      },
+      {
+        "name": "KeyIssue",
+        "type": "string"
+      },
+      {
+        "name": "ConflictTx",
+        "type": "string"
+      },
+      {
+        "name": "Conflicts",
+        "type": "int"
+      },
+      {
+        "name": "Warnings",
+        "type": "[]string"
+      }
+    ]
+  },
+  "enums": [
+    {
+      "Name": "BindingKind",
+      "Values": [
+        "source",
+        "lrclib",
+        "local_file",
+        "local_song"
+      ]
+    },
+    {
+      "Name": "BindingScope",
+      "Values": [
+        "auto",
+        "portable",
+        "local"
+      ]
+    },
+    {
+      "Name": "SourceID",
+      "Values": [
+        "bilibili",
+        "netease",
+        "local"
+      ]
+    },
+    {
+      "Name": "BrowseKind",
+      "Values": [
+        "artist",
+        "user",
+        "user-programs",
+        "radio",
+        "radios",
+        "playlist"
+      ]
+    },
+    {
+      "Name": "PlaylistKind",
+      "Values": [
+        "remote",
+        "local",
+        "mixin",
+        "folder"
+      ]
+    },
+    {
+      "Name": "PlaybackStatus",
+      "Values": [
+        "idle",
+        "buffering",
+        "playing",
+        "paused",
+        "ended",
+        "failed"
+      ]
+    },
+    {
+      "Name": "PlaybackMode",
+      "Values": [
+        "list_loop",
+        "loop_one",
+        "shuffle",
+        "ordered"
+      ]
+    },
+    {
+      "Name": "Quality",
+      "Values": [
+        "auto",
+        "high",
+        "lossless"
+      ]
+    },
+    {
+      "Name": "SyncBackend",
+      "Values": [
+        "auto",
+        "cli",
+        "gogit"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "wire_types": {
+    "Archive": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      }
+    ],
+    "BatchFailure": [
+      {
+        "name": "song_id",
+        "type": "string"
+      },
+      {
+        "name": "error",
+        "type": "string"
+      }
+    ],
+    "BatchResult": [
+      {
+        "name": "succeeded",
+        "type": "[]string"
+      },
+      {
+        "name": "skipped",
+        "type": "[]string"
+      },
+      {
+        "name": "failed",
+        "type": "[]wire.BatchFailure"
+      }
+    ],
+    "BrowseEntry": [
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "subtitle",
+        "type": "string"
+      },
+      {
+        "name": "ref",
+        "type": "*wire.BrowseRef"
+      },
+      {
+        "name": "track",
+        "type": "*wire.Track"
+      }
+    ],
+    "BrowsePage": [
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "name": "cover",
+        "type": "string"
+      },
+      {
+        "name": "notice",
+        "type": "string"
+      },
+      {
+        "name": "entries",
+        "type": "[]wire.BrowseEntry"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "has_more",
+        "type": "bool"
+      }
+    ],
+    "BrowseRef": [
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "kind",
+        "type": "wire.BrowseKind"
+      },
+      {
+        "name": "id",
+        "type": "string"
+      }
+    ],
+    "Candidate": [
+      {
+        "name": "track",
+        "type": "wire.Track"
+      },
+      {
+        "name": "play",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "vip",
+        "type": "bool"
+      }
+    ],
+    "Clip": [
+      {
+        "name": "start_ms",
+        "type": "int64"
+      },
+      {
+        "name": "end_ms",
+        "type": "int64"
+      }
+    ],
+    "Comment": [
+      {
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "name": "author",
+        "type": "string"
+      },
+      {
+        "name": "author_ref",
+        "type": "*wire.BrowseRef"
+      },
+      {
+        "name": "avatar",
+        "type": "string"
+      },
+      {
+        "name": "content",
+        "type": "string"
+      },
+      {
+        "name": "likes",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "created_at",
+        "type": "*wire.Timestamp"
+      },
+      {
+        "name": "reply_count",
+        "type": "int"
+      }
+    ],
+    "CommentPage": [
+      {
+        "name": "comments",
+        "type": "[]wire.Comment"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "has_more",
+        "type": "bool"
+      },
+      {
+        "name": "notice",
+        "type": "string"
+      }
+    ],
+    "Download": [
+      {
+        "name": "song_id",
+        "type": "string"
+      },
+      {
+        "name": "path",
+        "type": "string"
+      },
+      {
+        "name": "size",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "codec",
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "created_at",
+        "type": "*wire.Timestamp"
+      }
+    ],
+    "DownloadEntry": [
+      {
+        "name": "download",
+        "type": "wire.Download"
+      },
+      {
+        "name": "song",
+        "type": "*wire.Song"
+      }
+    ],
+    "DownloadProgress": [
+      {
+        "name": "done",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "total",
+        "type": "wire.Decimal"
+      }
+    ],
+    "DownloadResult": [
+      {
+        "name": "song",
+        "type": "wire.Song"
+      },
+      {
+        "name": "path",
+        "type": "string"
+      },
+      {
+        "name": "size",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "has_error",
+        "type": "bool"
+      }
+    ],
+    "DownloadTask": [
+      {
+        "name": "id",
+        "type": "int"
+      },
+      {
+        "name": "song",
+        "type": "wire.Song"
+      },
+      {
+        "name": "state",
+        "type": "string"
+      },
+      {
+        "name": "done",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "total",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "path",
+        "type": "string"
+      },
+      {
+        "name": "failed",
+        "type": "bool"
+      }
+    ],
+    "EngineStream": [
+      {
+        "name": "url",
+        "type": "string"
+      },
+      {
+        "name": "headers",
+        "type": "map[string]string"
+      },
+      {
+        "name": "codec",
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "expires_at",
+        "type": "*wire.Timestamp"
+      },
+      {
+        "name": "quality",
+        "type": "string"
+      },
+      {
+        "name": "clip_start_ms",
+        "type": "int64"
+      },
+      {
+        "name": "clip_end_ms",
+        "type": "int64"
+      }
+    ],
+    "GUISettings": [
+      {
+        "name": "theme",
+        "type": "string"
+      },
+      {
+        "name": "palette",
+        "type": "string"
+      },
+      {
+        "name": "accent",
+        "type": "string"
+      },
+      {
+        "name": "close_action",
+        "type": "string"
+      },
+      {
+        "name": "shortcuts",
+        "type": "map[string]string"
+      },
+      {
+        "name": "window",
+        "type": "string"
+      }
+    ],
+    "LibraryScan": [
+      {
+        "name": "playlist",
+        "type": "wire.Playlist"
+      },
+      {
+        "name": "subdirs",
+        "type": "int"
+      },
+      {
+        "name": "scanned",
+        "type": "int"
+      },
+      {
+        "name": "added",
+        "type": "int"
+      },
+      {
+        "name": "reused",
+        "type": "int"
+      },
+      {
+        "name": "missing",
+        "type": "int"
+      },
+      {
+        "name": "warning_count",
+        "type": "int"
+      }
+    ],
+    "LoginPoll": [
+      {
+        "name": "code",
+        "type": "int"
+      },
+      {
+        "name": "message",
+        "type": "string"
+      },
+      {
+        "name": "logged_in",
+        "type": "bool"
+      },
+      {
+        "name": "expired",
+        "type": "bool"
+      }
+    ],
+    "LoginQR": [
+      {
+        "name": "key",
+        "type": "string"
+      },
+      {
+        "name": "url",
+        "type": "string"
+      }
+    ],
+    "LyricBinding": [
+      {
+        "name": "kind",
+        "type": "wire.BindingKind"
+      },
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "external_id",
+        "type": "string"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "cid",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "lrclib_id",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "path",
+        "type": "string"
+      },
+      {
+        "name": "song_id",
+        "type": "string"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "artist",
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "offset_ms",
+        "type": "int64"
+      },
+      {
+        "name": "bound_at",
+        "type": "*wire.Timestamp"
+      }
+    ],
+    "LyricCandidate": [
+      {
+        "name": "kind",
+        "type": "wire.BindingKind"
+      },
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "external_id",
+        "type": "string"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "cid",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "lrclib_id",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "path",
+        "type": "string"
+      },
+      {
+        "name": "song_id",
+        "type": "string"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "artist",
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "has_synced",
+        "type": "bool"
+      },
+      {
+        "name": "known",
+        "type": "bool"
+      },
+      {
+        "name": "mark",
+        "type": "string"
+      }
+    ],
+    "LyricLine": [
+      {
+        "name": "start_ms",
+        "type": "int64"
+      },
+      {
+        "name": "text",
+        "type": "string"
+      },
+      {
+        "name": "translation",
+        "type": "string"
+      }
+    ],
+    "LyricPreview": [
+      {
+        "name": "lines",
+        "type": "[]wire.LyricLine"
+      },
+      {
+        "name": "label",
+        "type": "string"
+      },
+      {
+        "name": "count",
+        "type": "int"
+      },
+      {
+        "name": "binding",
+        "type": "wire.LyricBinding"
+      }
+    ],
+    "LyricsResult": [
+      {
+        "name": "lines",
+        "type": "[]wire.LyricLine"
+      },
+      {
+        "name": "offset_ms",
+        "type": "int64"
+      },
+      {
+        "name": "offset_key",
+        "type": "wire.BindingScope"
+      },
+      {
+        "name": "source",
+        "type": "string"
+      },
+      {
+        "name": "bound",
+        "type": "bool"
+      },
+      {
+        "name": "degraded",
+        "type": "bool"
+      },
+      {
+        "name": "has_warning",
+        "type": "bool"
+      },
+      {
+        "name": "binding",
+        "type": "*wire.LyricBinding"
+      },
+      {
+        "name": "binding_kind",
+        "type": "wire.BindingScope"
+      }
+    ],
+    "PlaybackSnapshot": [
+      {
+        "name": "queue",
+        "type": "[]wire.Song"
+      },
+      {
+        "name": "index",
+        "type": "int"
+      },
+      {
+        "name": "current",
+        "type": "*wire.Song"
+      },
+      {
+        "name": "state",
+        "type": "wire.PlaybackStatus"
+      },
+      {
+        "name": "position_ms",
+        "type": "int64"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "mode",
+        "type": "wire.PlaybackMode"
+      },
+      {
+        "name": "volume",
+        "type": "float64"
+      },
+      {
+        "name": "comp_db",
+        "type": "float64"
+      },
+      {
+        "name": "song_comp_db",
+        "type": "float64"
+      },
+      {
+        "name": "auto_gain",
+        "type": "bool"
+      },
+      {
+        "name": "muted",
+        "type": "bool"
+      },
+      {
+        "name": "awaiting",
+        "type": "bool"
+      },
+      {
+        "name": "request_id",
+        "type": "int"
+      },
+      {
+        "name": "sleep_until",
+        "type": "*wire.Timestamp"
+      },
+      {
+        "name": "quality",
+        "type": "wire.Quality"
+      }
+    ],
+    "Playlist": [
+      {
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "kind",
+        "type": "wire.PlaylistKind"
+      },
+      {
+        "name": "remote_id",
+        "type": "string"
+      },
+      {
+        "name": "count",
+        "type": "int"
+      },
+      {
+        "name": "frozen",
+        "type": "bool"
+      },
+      {
+        "name": "sync_excluded",
+        "type": "bool"
+      },
+      {
+        "name": "root_path",
+        "type": "string"
+      },
+      {
+        "name": "scan_status",
+        "type": "string"
+      },
+      {
+        "name": "has_scan_error",
+        "type": "bool"
+      },
+      {
+        "name": "scanned_at",
+        "type": "*wire.Timestamp"
+      },
+      {
+        "name": "created_at",
+        "type": "*wire.Timestamp"
+      }
+    ],
+    "Preferences": [
+      {
+        "name": "volume",
+        "type": "float64"
+      },
+      {
+        "name": "comp_db",
+        "type": "float64"
+      },
+      {
+        "name": "auto_gain",
+        "type": "bool"
+      },
+      {
+        "name": "quality",
+        "type": "wire.Quality"
+      },
+      {
+        "name": "mode",
+        "type": "wire.PlaybackMode"
+      },
+      {
+        "name": "playing_playlist",
+        "type": "string"
+      },
+      {
+        "name": "local_first",
+        "type": "bool"
+      },
+      {
+        "name": "mouse",
+        "type": "bool"
+      }
+    ],
+    "ProfileList": [
+      {
+        "name": "entries",
+        "type": "[]wire.BrowseEntry"
+      }
+    ],
+    "QueueSnapshot": [
+      {
+        "name": "ids",
+        "type": "[]string"
+      },
+      {
+        "name": "index",
+        "type": "int"
+      },
+      {
+        "name": "position_ms",
+        "type": "int64"
+      }
+    ],
+    "RelatedPage": [
+      {
+        "name": "candidates",
+        "type": "[]wire.Candidate"
+      }
+    ],
+    "RemotePlaylist": [
+      {
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "remote_id",
+        "type": "string"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "count",
+        "type": "int"
+      }
+    ],
+    "SearchPage": [
+      {
+        "name": "candidates",
+        "type": "[]wire.Candidate"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "pages",
+        "type": "int"
+      }
+    ],
+    "SearchResult": [
+      {
+        "name": "candidates",
+        "type": "[]wire.Candidate"
+      },
+      {
+        "name": "pages",
+        "type": "int"
+      },
+      {
+        "name": "has_warning",
+        "type": "bool"
+      }
+    ],
+    "Song": [
+      {
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "remote_id",
+        "type": "string"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "cid",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "artist",
+        "type": "string"
+      },
+      {
+        "name": "album",
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "cover",
+        "type": "string"
+      },
+      {
+        "name": "added_at",
+        "type": "*wire.Timestamp"
+      }
+    ],
+    "SongAnnotation": [
+      {
+        "name": "song_id",
+        "type": "string"
+      },
+      {
+        "name": "lyric_offset_ms",
+        "type": "int64"
+      },
+      {
+        "name": "comp_db",
+        "type": "float64"
+      },
+      {
+        "name": "clip_start_ms",
+        "type": "int64"
+      },
+      {
+        "name": "clip_end_ms",
+        "type": "int64"
+      },
+      {
+        "name": "lyric_bind",
+        "type": "*wire.LyricBinding"
+      }
+    ],
+    "SourceCapabilities": [
+      {
+        "name": "names",
+        "type": "[]string"
+      },
+      {
+        "name": "unknown_bits",
+        "type": "wire.Decimal"
+      }
+    ],
+    "SourceInfo": [
+      {
+        "name": "id",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "mark",
+        "type": "string"
+      },
+      {
+        "name": "capabilities",
+        "type": "wire.SourceCapabilities"
+      },
+      {
+        "name": "user",
+        "type": "wire.User"
+      }
+    ],
+    "StreamInfo": [
+      {
+        "name": "codec",
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "expires_at",
+        "type": "*wire.Timestamp"
+      },
+      {
+        "name": "quality",
+        "type": "string"
+      },
+      {
+        "name": "clip_start_ms",
+        "type": "int64"
+      },
+      {
+        "name": "clip_end_ms",
+        "type": "int64"
+      }
+    ],
+    "SyncConfig": [
+      {
+        "name": "backend",
+        "type": "wire.SyncBackend"
+      },
+      {
+        "name": "remote",
+        "type": "string"
+      },
+      {
+        "name": "branch",
+        "type": "string"
+      },
+      {
+        "name": "auto",
+        "type": "bool"
+      },
+      {
+        "name": "sync_accounts",
+        "type": "bool"
+      }
+    ],
+    "SyncConflict": [
+      {
+        "name": "index",
+        "type": "int"
+      },
+      {
+        "name": "entity",
+        "type": "string"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "summary",
+        "type": "string"
+      },
+      {
+        "name": "both",
+        "type": "bool"
+      }
+    ],
+    "SyncConflictList": [
+      {
+        "name": "tx_id",
+        "type": "string"
+      },
+      {
+        "name": "entities",
+        "type": "[]wire.SyncConflict"
+      }
+    ],
+    "SyncStatus": [
+      {
+        "name": "requested_backend",
+        "type": "wire.SyncBackend"
+      },
+      {
+        "name": "actual_backend",
+        "type": "wire.SyncBackend"
+      },
+      {
+        "name": "configured",
+        "type": "bool"
+      },
+      {
+        "name": "remote",
+        "type": "string"
+      },
+      {
+        "name": "branch",
+        "type": "string"
+      },
+      {
+        "name": "auto",
+        "type": "bool"
+      },
+      {
+        "name": "sync_accounts",
+        "type": "bool"
+      },
+      {
+        "name": "key_cached",
+        "type": "bool"
+      },
+      {
+        "name": "key_matches_repo",
+        "type": "bool"
+      },
+      {
+        "name": "key_version",
+        "type": "int"
+      },
+      {
+        "name": "last_sync_at",
+        "type": "*wire.Timestamp"
+      },
+      {
+        "name": "has_error",
+        "type": "bool"
+      },
+      {
+        "name": "has_key_issue",
+        "type": "bool"
+      },
+      {
+        "name": "conflict_tx",
+        "type": "string"
+      },
+      {
+        "name": "conflicts",
+        "type": "int"
+      },
+      {
+        "name": "warning_count",
+        "type": "int"
+      }
+    ],
+    "Track": [
+      {
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "external_id",
+        "type": "string"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "cid",
+        "type": "wire.Decimal"
+      },
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "artist",
+        "type": "string"
+      },
+      {
+        "name": "album",
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "type": "int64"
+      },
+      {
+        "name": "cover",
+        "type": "string"
+      }
+    ],
+    "TrackRef": [
+      {
+        "name": "source",
+        "type": "wire.SourceID"
+      },
+      {
+        "name": "external_id",
+        "type": "string"
+      },
+      {
+        "name": "page",
+        "type": "int"
+      },
+      {
+        "name": "cid",
+        "type": "wire.Decimal"
+      }
+    ],
+    "User": [
+      {
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "avatar",
+        "type": "string"
+      },
+      {
+        "name": "logged_in",
+        "type": "bool"
+      }
+    ],
+    "Work": [
+      {
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "name": "action",
+        "type": "string"
+      },
+      {
+        "name": "state",
+        "type": "string"
+      },
+      {
+        "name": "message",
+        "type": "string"
+      }
+    ]
+  }
+}
