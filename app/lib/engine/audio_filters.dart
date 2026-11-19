@@ -15,3 +15,13 @@ String playbackFilter({required bool loudnorm, required double compDb}) {
   ];
   return parts.join(',');
 }
+
+/// mpv rejects an unknown `af` entry and leaves the option unchanged.
+/// `setProperty("af")` logs `Option af: …`; the `af set` command logs
+/// `Option af-set: …`. Android libmpv ships almost no audio filters, so
+/// `volume` and `alimiter` hit this path; compensation then uses the volume
+/// property.
+bool isUnsupportedAudioFilterError(String message) {
+  final text = message.trim();
+  return text.startsWith('Option af:') || text.startsWith('Option af-');
+}

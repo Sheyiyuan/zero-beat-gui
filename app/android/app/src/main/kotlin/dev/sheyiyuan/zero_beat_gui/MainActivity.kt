@@ -29,11 +29,19 @@ class MainActivity : AudioServiceActivity() {
     }
     private var picker: MethodChannel.Result? = null
     private var exportPath: String? = null
+    private var systemVolume: SystemVolumeChannel? = null
     private val permissions = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
     override fun configureFlutterEngine(engine: FlutterEngine) {
         super.configureFlutterEngine(engine)
         WebLoginCookies.register(engine.dartExecutor.binaryMessenger)
+        Haptics.register(engine, applicationContext)
+        // The activity can be recreated with a cached engine; replace the old
+        // bridge instead of layering handlers on the same messenger.
+        systemVolume?.dispose()
+        systemVolume = SystemVolumeChannel(this).also {
+            it.register(engine.dartExecutor.binaryMessenger)
+        }
         MethodChannel(engine.dartExecutor.binaryMessenger, "zero_beat/storage").setMethodCallHandler { call, result ->
             when (call.method) {
                 "pickDirectory" -> {
@@ -191,6 +199,7 @@ class MainActivity : AudioServiceActivity() {
     }
     override fun onDestroy() {
         picker?.success(null);picker=null
+        systemVolume?.dispose();systemVolume=null
         // Descriptor ownership is the player, not this activity: background audio
         // can outlive an activity recreation. Dart closes each explicit handle.
         super.onDestroy()

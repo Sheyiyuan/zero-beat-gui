@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../core/developer_log.dart';
 import '../shared/player_bar.dart';
+import '../shared/playback.dart';
 import '../shared/queue_panel.dart';
 import '../mobile/full_player_page.dart';
 
@@ -50,6 +52,7 @@ Future<void> perform(
   BuildContext context,
   Future<void> Function() operation, {
   String? success,
+  String source = '操作',
 }) async {
   try {
     await operation();
@@ -59,10 +62,12 @@ Future<void> perform(
       ).showSnackBar(SnackBar(content: Text(success)));
     }
   } catch (error) {
+    final message = error is FormatException ? error.message : errorText(error);
+    DeveloperLog.instance.warning(source, message);
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 }
@@ -189,7 +194,7 @@ class _AsyncFeatureState<T> extends State<AsyncFeature<T>> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Expanded(child: Text('$_error')),
+              Expanded(child: Text('加载失败：${errorText(_error!)}')),
               TextButton(
                 onPressed: _busy ? null : _load,
                 child: const Text('重试'),

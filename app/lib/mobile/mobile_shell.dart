@@ -1,5 +1,6 @@
 import '../features/navigation.dart';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 
 import '../app/theme.dart';
 import 'library_page.dart';
@@ -59,12 +60,11 @@ class _MobileShellState extends State<MobileShell> {
             ],
           ),
         ),
-        bottomNavigationBar: Material(
-          color: context.zero.surface,
+        bottomNavigationBar: ColoredBox(
+          color: context.zero.canvas,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Divider(height: 1, thickness: 1, color: context.zero.line),
               PlayerBar(
                 compact: true,
                 onOpen: _openPlayer,
@@ -75,15 +75,15 @@ class _MobileShellState extends State<MobileShell> {
                 onDestinationSelected: (index) => setState(() => _tab = index),
                 destinations: const [
                   NavigationDestination(
-                    icon: Icon(Icons.library_music_outlined),
+                    icon: Icon(AppIcons.library),
                     label: '曲库',
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.explore_outlined),
+                    icon: Icon(AppIcons.discover),
                     label: '发现',
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.person_outline),
+                    icon: Icon(AppIcons.person),
                     label: '我的',
                   ),
                 ],

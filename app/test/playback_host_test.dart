@@ -105,17 +105,35 @@ void main() {
     expect(host.reportState().state, 'paused');
   });
 
-  test('loudnorm is omitted when the player cannot enable it', () async {
+  test(
+    'a missing loudnorm filter is not reported as a playback error',
+    () async {
+      final host = PlaybackHost(
+        createPlayer: () => _FakePlayer(filterOk: false),
+        enablePositionClock: false,
+      );
+      addTearDown(host.close);
+
+      await host.prepare();
+      expect(host.capabilities, ['clip']);
+      expect(host.loudnormNotice, isEmpty);
+    },
+  );
+  test('linear user volume is inverted from mpv cubic softvol', () async {
+    final player = _FakePlayer();
     final host = PlaybackHost(
-      createPlayer: () => _FakePlayer(filterOk: false),
+      createPlayer: () => player,
       enablePositionClock: false,
     );
     addTearDown(host.close);
-
-    await host.prepare();
-    expect(host.capabilities, ['clip']);
-    expect(host.loudnormNotice, '当前播放器无法启用响度均衡');
+    await host.load(_load('vol', volume: 0.05));
+    await flush();
+    expect(player.lastVolume, closeTo(36.84, 0.1));
+    await host.volume('vol', 0.5);
+    await flush();
+    expect(player.lastVolume, closeTo(79.37, 0.1));
   });
+
   test(
     'resuming a paused load updates intention, including buffering callbacks',
     () async {
@@ -196,6 +214,42 @@ void main() {
     },
   );
 
+  for (final filterError in [
+    "Option af: volume doesn't exist.",
+    "Option af-set: volume doesn't exist.",
+  ]) {
+    test(
+      'a missing volume filter ($filterError) does not fail playback',
+      () async {
+        final player = _FakePlayer(filterOk: false, filterError: filterError);
+        final host = PlaybackHost(
+          createPlayer: () => player,
+          enablePositionClock: false,
+        );
+        addTearDown(host.close);
+
+        await host.load(_load('comp', volume: 1, compDb: 8));
+        await flush();
+
+        expect(host.reportState().state, 'playing');
+        expect(host.terminalEvents, isEmpty);
+        expect(player.lastVolume, closeTo(100, 0.1));
+        expect(host.playbackNotice, '音量补偿超过播放器上限，已放到最大音量');
+
+        await host.load(_load('quieter', volume: 1, compDb: -6));
+        await flush();
+        expect(host.reportState().state, 'playing');
+        expect(host.terminalEvents, isEmpty);
+        expect(player.lastVolume, closeTo(79.43, 0.1));
+        expect(host.playbackNotice, isEmpty);
+
+        player.listener!.onError('Failed to open https://example.test/quieter');
+        expect(host.reportState().state, 'failed');
+        expect(host.reportState().error, contains('Failed to open'));
+      },
+    );
+  }
+
   test('focus denial pauses without reporting a source failure', () async {
     final player = _FakePlayer();
     var denied = 0;
@@ -238,6 +292,8 @@ EngineLoad _load(
   bool playWhenReady = true,
   int startAtMs = 0,
   int clipEndMs = 0,
+  double volume = 0.8,
+  double compDb = 0,
 }) {
   return EngineLoad(
     playbackId: id,
@@ -252,18 +308,19 @@ EngineLoad _load(
     ),
     startAtMs: startAtMs,
     playWhenReady: playWhenReady,
-    volume: 0.8,
-    compDb: 0,
+    volume: volume,
+    compDb: compDb,
     autoGain: false,
   );
 }
 
 class _FakePlayer implements EnginePlayer {
-  _FakePlayer({this.filterOk = true, this.openGate});
+  _FakePlayer({this.filterOk = true, this.filterError = '', this.openGate});
   final Completer<void>? openGate;
   int playCalls = 0;
 
   final bool filterOk;
+  final String filterError;
   EnginePlayerListener? listener;
   bool disposed = false;
   bool openedPlay = false;
@@ -271,6 +328,7 @@ class _FakePlayer implements EnginePlayer {
   Duration? end;
   Map<String, String> headers = const {};
   int pauseCalls = 0;
+  double? lastVolume;
 
   void fireCompleted() => listener?.onCompleted();
 
@@ -306,10 +364,17 @@ class _FakePlayer implements EnginePlayer {
   Future<void> seek(Duration position) async {}
 
   @override
-  Future<void> setVolume(double percent) async {}
+  Future<void> setVolume(double percent) async {
+    lastVolume = percent;
+  }
 
   @override
-  Future<bool> trySetFilter(String filter) async => filterOk;
+  Future<bool> trySetFilter(String filter) async {
+    if (!filterOk && filterError.isNotEmpty) {
+      listener?.onError(filterError);
+    }
+    return filterOk;
+  }
 
   @override
   void listen(EnginePlayerListener listener) {

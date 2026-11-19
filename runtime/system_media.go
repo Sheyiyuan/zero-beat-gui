@@ -88,6 +88,11 @@ func bindSystemMedia(sess *session.Session) (func(), error) {
 						mode = player.ModeLoopOne
 					}
 					_ = sess.SetMode(call, mode)
+				case sysmedia.CommandRestart:
+					// 只回到 0，不改变 play/pause；与锁屏“从头播放”语义一致。
+					_ = sess.SeekMS(call, 0)
+				case sysmedia.CommandCycleMode:
+					_ = sess.SetMode(call, v.Mode.Next())
 				}
 				stop()
 			}

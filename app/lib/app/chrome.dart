@@ -11,16 +11,17 @@ class PageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
             style: TextStyle(
-              fontSize: 28,
-              height: 1.15,
-              fontWeight: FontWeight.w700,
+              fontSize: 30,
+              height: 1.1,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
               color: context.zero.text,
             ),
           ),
@@ -41,28 +42,52 @@ class PageHeader extends StatelessWidget {
   }
 }
 
+/// Section label above an [InsetGroup].
+class GroupLabel extends StatelessWidget {
+  const GroupLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: context.zero.muted,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 class InsetGroup extends StatelessWidget {
-  const InsetGroup({required this.children, super.key});
+  const InsetGroup({
+    required this.children,
+    this.dividerIndent = 56,
+    super.key,
+  });
 
   final List<Widget> children;
+
+  /// Where row separators start; 56 lines up with text after a leading icon.
+  final double dividerIndent;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: context.zero.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           for (var i = 0; i < children.length; i++) ...[
             children[i],
             if (i != children.length - 1)
-              Divider(
-                height: 1,
-                indent: 16,
-                endIndent: 16,
-                color: context.zero.line,
-              ),
+              Divider(height: 1, indent: dividerIndent),
           ],
         ],
       ),

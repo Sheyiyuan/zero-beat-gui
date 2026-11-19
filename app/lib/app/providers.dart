@@ -4,12 +4,19 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 
+import '../core/developer_log.dart';
 import '../core/interruption_policy.dart';
 import '../engine/playback_host.dart';
 
 final coreApiProvider = Provider<CoreApi>((ref) {
   throw StateError('CoreApi 未注入');
 });
+
+/// Mutable process-wide log exposed through Riverpod so tests can inject a
+/// fresh buffer without resetting global state.
+final developerLogProvider = Provider<DeveloperLog>(
+  (ref) => DeveloperLog.instance,
+);
 
 final interruptionPolicyProvider = Provider<InterruptionPolicy>((ref) {
   return InterruptionPolicy();

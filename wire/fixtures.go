@@ -45,7 +45,7 @@ func Fixtures() []Fixture {
 		fixture("login-poll", FromLoginPoll(source.LoginStatus{Code: 86101, Message: "等待扫码"})),
 		fixture("batch-failure", BatchFailure{SongID: "netease:1:1", Error: "权限不足"}),
 		fixture("batch-result", FromBatch(session.BatchResult{Succeeded: []string{"netease:2:1"}, Failed: []session.BatchItem{{SongID: "netease:1:1", Error: "权限不足"}}})),
-		fixture("gui-settings", FromGUISettings(session.GUISettings{Theme: "system", Palette: "zero-red", CloseAction: "background"})),
+		fixture("gui-settings", FromGUISettings(session.GUISettings{Theme: "system", Palette: "zero-red", CloseAction: "background", Haptics: true})),
 		fixture("clip", FromClip(store.Clip{StartMS: 1234, EndMS: 4321})),
 		fixture("preferences", FromPreferences(app.Preferences{Volume: 0.8, AutoGain: true, Quality: source.QualityHigh, Mode: 2, LocalFirst: true, Mouse: true})),
 		fixture("download", FromDownload(store.Download{SongID: "netease:program:2066770638:1", Path: "/music/episode.m4a", Size: 9223372036854775807, Codec: "aac", DurationMS: 245000, CreatedAt: now})),

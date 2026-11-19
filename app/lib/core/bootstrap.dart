@@ -10,6 +10,7 @@ import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import '../engine/media_kit_engine_player.dart';
 import '../engine/playback_host.dart';
 import '../platform/android_audio.dart';
+import 'android_core_volume.dart';
 import 'interruption_policy.dart';
 import 'audio_focus.dart';
 import 'native_start.dart';
@@ -158,6 +159,12 @@ class CoreRuntime {
       };
       final policy = InterruptionPolicy();
       if (android) {
+        // One startup-only write, not a rebuild listener. Android's
+        // STREAM_MUSIC is the final volume stage, so the core/mpv volume must
+        // be 1.0; otherwise the phone slider would still be scaled by the old
+        // persisted 0.55 (or similar). The setting is local-only and sync's
+        // snapshot excludes settings. Desktop never enters this branch.
+        await alignAndroidCoreVolume(api);
         final session = await AudioSession.instance;
         final focus = _focus = AudioFocusCoordinator(
           (active) => session.setActive(active),

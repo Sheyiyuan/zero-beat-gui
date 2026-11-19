@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
@@ -24,6 +25,7 @@ class _LyricsBodyState extends ConsumerState<LyricsBody> {
   final scroll = ScrollController();
   final lineKeys = <int, GlobalKey>{};
   bool following = true;
+  bool autoScrolling = false;
   int version = 0;
   int lastLine = -1;
   @override
@@ -49,19 +51,22 @@ class _LyricsBodyState extends ConsumerState<LyricsBody> {
         }
         if (following && current != lastLine) {
           lastLine = current;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && scroll.hasClients && current >= 0) {
-              final target = lineKeys[current]?.currentContext;
-              if (target != null) {
-                Scrollable.ensureVisible(
-                  target,
-                  alignment: 0.35,
-                  duration: MediaQuery.of(context).disableAnimations
-                      ? Duration.zero
-                      : const Duration(milliseconds: 220),
-                  curve: Curves.easeOut,
-                );
-              }
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted || !scroll.hasClients || current < 0) return;
+            final target = lineKeys[current]?.currentContext;
+            if (target == null) return;
+            autoScrolling = true;
+            try {
+              await Scrollable.ensureVisible(
+                target,
+                alignment: 0.35,
+                duration: MediaQuery.of(context).disableAnimations
+                    ? Duration.zero
+                    : const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+              );
+            } finally {
+              autoScrolling = false;
             }
           });
         }
@@ -86,7 +91,7 @@ class _LyricsBodyState extends ConsumerState<LyricsBody> {
                       );
                       reload();
                     }),
-                    icon: const Icon(Icons.remove),
+                    icon: const Icon(AppIcons.minus),
                   ),
                   IconButton(
                     tooltip: '歌词延后 0.5 秒',
@@ -98,14 +103,14 @@ class _LyricsBodyState extends ConsumerState<LyricsBody> {
                       );
                       reload();
                     }),
-                    icon: const Icon(Icons.add),
+                    icon: const Icon(AppIcons.plus),
                   ),
                   TextButton(
                     onPressed: () => perform(context, () async {
                       await api.lyricOffset(widget.song.id, data.offsetKey, 0);
                       reload();
                     }),
-                    child: const Text('归零'),
+                    child: const Text('重置时间'),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -124,15 +129,21 @@ class _LyricsBodyState extends ConsumerState<LyricsBody> {
             if (data.degraded)
               const Padding(
                 padding: EdgeInsets.all(12),
-                child: Text('绑定失效，已回退到自动来源；原绑定仍保留'),
+                child: Text('所选歌词暂不可用，已自动查找其他歌词；原来的选择已保留。'),
               ),
             Expanded(
               child: data.lines.isEmpty
-                  ? const Center(child: Text('暂未找到带时间轴的歌词，可尝试更换来源'))
+                  ? const Center(child: Text('暂无同步歌词，可尝试更换来源。'))
                   : NotificationListener<ScrollNotification>(
                       onNotification: (n) {
-                        if (n is ScrollStartNotification &&
-                            n.dragDetails != null) {
+                        // Mouse-wheel scrolling has no dragDetails; treat any
+                        // user scroll as manual, but ignore the programmatic
+                        // ensureVisible animation above.
+                        if (!autoScrolling &&
+                            following &&
+                            (n is ScrollStartNotification ||
+                                n is ScrollUpdateNotification ||
+                                n is UserScrollNotification)) {
                           setState(() => following = false);
                         }
                         return false;
@@ -236,7 +247,7 @@ class _LyricBindingBodyState extends ConsumerState<LyricBindingBody> {
             labelText: '搜索歌词',
             suffixIcon: IconButton(
               onPressed: () => setState(() => query = input.text),
-              icon: const Icon(Icons.search),
+              icon: const Icon(AppIcons.search),
             ),
           ),
         ),
@@ -293,7 +304,7 @@ class _LyricBindingBodyState extends ConsumerState<LyricBindingBody> {
                 ),
               );
             }),
-            child: const Text('选择 LRC 文件'),
+            child: const Text('导入歌词文件（LRC）'),
           ),
           TextButton(
             onPressed: () => perform(context, () async {
@@ -336,7 +347,7 @@ class _LyricBindingBodyState extends ConsumerState<LyricBindingBody> {
                 );
               }
             }),
-            child: const Text('绑定本机曲目'),
+            child: const Text('使用本机歌曲的歌词'),
           ),
           TextButton(
             onPressed: () => perform(context, () async {
@@ -393,14 +404,14 @@ class _LyricBindingBodyState extends ConsumerState<LyricBindingBody> {
               }
               await _bind(candidate);
             }),
-            child: const Text('指定链接／ID'),
+            child: const Text('输入歌曲链接或歌词 ID'),
           ),
           TextButton(
             onPressed: () => perform(context, () async {
               await ref.read(coreApiProvider).unbindLyrics(widget.song.id);
               if (context.mounted) Navigator.pop(context);
             }),
-            child: const Text('恢复自动来源'),
+            child: const Text('自动查找歌词'),
           ),
         ],
       ),
@@ -416,7 +427,7 @@ class _LyricBindingBodyState extends ConsumerState<LyricBindingBody> {
                 ListTile(
                   title: Text(c.title),
                   subtitle: Text('${c.artist} · ${c.mark}'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(AppIcons.chevronRight, size: 18),
                   onTap: () => _bind(c),
                 ),
             ],
@@ -574,19 +585,19 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
   String? _validationIssue(double duration) {
     final a = double.tryParse(start.text);
     if (a == null || !a.isFinite || a < 0) {
-      return '请输入有效的起点秒数。';
+      return '请输入有效的开始时间（秒）。';
     }
     final endText = end.text.trim();
     if (endText.isEmpty) return null;
     final b = double.tryParse(endText);
     if (b == null || !b.isFinite) {
-      return '请输入有效的终点秒数。';
+      return '请输入有效的结束时间（秒）。';
     }
     if (b <= a) {
-      return '终点必须大于起点。';
+      return '结束时间必须晚于开始时间。';
     }
     if (duration > 0 && b > duration) {
-      return '终点不能超过全长 ${duration.toStringAsFixed(1)} 秒。';
+      return '结束时间不能超过歌曲总时长 ${duration.toStringAsFixed(1)} 秒。';
     }
     return null;
   }
@@ -627,7 +638,7 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
             max,
           );
           final canEdit = !busy && active;
-          final canSave = canEdit && issue == null && !unknownDuration;
+          final canSave = canEdit && issue == null;
           return ListView(
             padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + insets.bottom),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -641,18 +652,18 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
               const SizedBox(height: 8),
               Text(
                 '${sourceShortLabel(widget.song.source)}'
-                '${unknownDuration ? ' · 全长尚未就绪' : ' · 全长 ${formatClock(durationMs)}'}',
+                '${unknownDuration ? ' · 暂未获取歌曲时长' : ' · 总时长 ${formatClock(durationMs)}'}',
                 style: TextStyle(color: context.zero.muted, fontSize: 13),
               ),
               const SizedBox(height: 12),
               Text(
-                '片段按曲目 ID 保存，不修改原文件，也不导出音频。',
+                '片段仅用于播放，不会修改原文件或导出新的音频。',
                 style: TextStyle(color: context.zero.muted, fontSize: 13),
               ),
               if (!active) ...[
                 const SizedBox(height: 12),
                 Text(
-                  '当前歌曲已切换，此编辑已停止。请返回后重新打开。',
+                  '歌曲已切换，请返回后重新打开片段编辑。',
                   style: TextStyle(color: context.zero.danger),
                 ),
               ],
@@ -684,6 +695,7 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
               ],
               const SizedBox(height: 16),
               TextField(
+                key: const Key('clip-start'),
                 controller: start,
                 enabled: canEdit,
                 onChanged: (_) => setState(() {}),
@@ -691,12 +703,13 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: '起点（秒）',
+                  labelText: '开始时间（秒）',
                   isDense: true,
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
+                key: const Key('clip-end'),
                 controller: end,
                 enabled: canEdit,
                 onChanged: (_) => setState(() {}),
@@ -704,7 +717,7 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: '终点（秒）',
+                  labelText: '结束时间（秒）',
                   helperText: '留空表示播到原曲结尾。',
                   isDense: true,
                 ),
@@ -713,7 +726,7 @@ class _ClipEditorState extends ConsumerState<ClipEditor> {
               if (busy) const LinearProgressIndicator(),
               OutlinedButton(
                 onPressed: canSave ? () => _act('preview') : null,
-                child: const Text('从起点试听整首'),
+                child: const Text('试听片段'),
               ),
               const SizedBox(height: 10),
               FilledButton(

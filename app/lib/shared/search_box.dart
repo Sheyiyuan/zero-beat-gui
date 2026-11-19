@@ -3,10 +3,12 @@ import '../features/navigation.dart';
 import '../features/content_pages.dart';
 import '../features/song_selection.dart';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 
 import '../app/providers.dart';
+import 'brand_mark.dart';
 import '../app/theme.dart';
 import '../features/session.dart';
 import 'playback.dart';
@@ -57,50 +59,67 @@ class _SearchBoxState extends ConsumerState<SearchBox> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          key: Key('search-field'),
-          focusNode: ref.watch(searchFocusProvider),
-          controller: _keyword,
-          decoration: InputDecoration(
-            hintText: '搜索歌曲',
-            border: OutlineInputBorder(),
-          ),
-          textInputAction: TextInputAction.search,
-          onChanged: notifier.setKeyword,
-          onSubmitted: (_) => notifier.submit(),
-        ),
-        SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        Row(
           children: [
-            _SourceChip(
-              label: '合并',
-              value: '',
-              selected: search.source,
-              onSelected: notifier.setSource,
+            Expanded(
+              child: TextField(
+                key: Key('search-field'),
+                focusNode: ref.watch(searchFocusProvider),
+                controller: _keyword,
+                decoration: InputDecoration(
+                  hintText: '搜索歌曲',
+                  prefixIcon: const Icon(AppIcons.search, size: 20),
+                ),
+                textInputAction: TextInputAction.search,
+                onChanged: notifier.setKeyword,
+                onSubmitted: (_) => notifier.submit(),
+              ),
             ),
-            _SourceChip(
-              label: '哔哩哔哩',
-              value: 'bilibili',
-              selected: search.source,
-              onSelected: notifier.setSource,
-            ),
-            _SourceChip(
-              label: '网易云',
-              value: 'netease',
-              selected: search.source,
-              onSelected: notifier.setSource,
-            ),
+            const SizedBox(width: 8),
             FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 52)),
               onPressed: search.loading ? null : notifier.submit,
               child: Text('搜索'),
             ),
-            TextButton.icon(
+          ],
+        ),
+        SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  spacing: 8,
+                  children: [
+                    _SourceChip(
+                      label: '全部',
+                      value: '',
+                      selected: search.source,
+                      onSelected: notifier.setSource,
+                    ),
+                    _SourceChip(
+                      label: '哔哩哔哩',
+                      value: 'bilibili',
+                      selected: search.source,
+                      onSelected: notifier.setSource,
+                    ),
+                    _SourceChip(
+                      label: '网易云',
+                      value: 'netease',
+                      selected: search.source,
+                      onSelected: notifier.setSource,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            IconButton(
+              key: const Key('link-toggle'),
+              tooltip: _showLink ? '收起链接' : '打开链接',
+              isSelected: _showLink,
               onPressed: () => setState(() => _showLink = !_showLink),
-              icon: const Icon(Icons.link),
-              label: Text(_showLink ? '收起链接' : '打开链接'),
+              icon: const Icon(AppIcons.link, size: 20),
             ),
           ],
         ),
@@ -113,8 +132,8 @@ class _SearchBoxState extends ConsumerState<SearchBox> {
                   key: const Key('link-field'),
                   controller: _link,
                   decoration: const InputDecoration(
-                    hintText: '粘贴歌曲或主页链接',
-                    border: OutlineInputBorder(),
+                    hintText: '粘贴歌曲、歌单或主页链接',
+                    prefixIcon: Icon(AppIcons.link, size: 20),
                   ),
                   onSubmitted: _openLink,
                 ),
@@ -159,6 +178,12 @@ class _SourceChip extends StatelessWidget {
     return ConstrainedBox(
       constraints: BoxConstraints(minHeight: 48),
       child: ChoiceChip(
+        avatar: BrandMark.supports(value)
+            ? BrandMark(source: value, size: 16)
+            : null,
+        labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        showCheckmark: false,
         label: Text(label),
         selected: selected == value,
         onSelected: (_) => onSelected(value),

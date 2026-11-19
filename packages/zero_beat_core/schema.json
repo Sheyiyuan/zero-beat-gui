@@ -1438,6 +1438,10 @@
       {
         "name": "window",
         "type": "string"
+      },
+      {
+        "name": "haptics",
+        "type": "bool"
       }
     ],
     "LibraryScan": [

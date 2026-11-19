@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
@@ -174,7 +175,25 @@ class SelectableSong extends ConsumerWidget {
                 : selected ?? selection.focused == song.id,
             current: ref.watch(playerProvider).snapshot.current?.id == song.id,
             doubleTapToPlay: !mobile,
-            onLongPress: () => selection.toggle(song),
+            onLongPress: () => showSongMenu(
+              context,
+              ref,
+              song,
+              extra: const [
+                SongAction(id: 'select', label: '多选此曲', icon: AppIcons.select),
+              ],
+              onExtra: (_) => selection.toggle(song),
+            ),
+            onSecondaryTap: (position) => showSongMenu(
+              context,
+              ref,
+              song,
+              position: position,
+              extra: const [
+                SongAction(id: 'select', label: '多选此曲', icon: AppIcons.select),
+              ],
+              onExtra: (_) => selection.toggle(song),
+            ),
             onTap: () {
               if (selection.selecting) {
                 selection.toggle(song);
@@ -185,7 +204,7 @@ class SelectableSong extends ConsumerWidget {
                 onSelect?.call();
               }
             },
-            onPlay: play,
+            onPlay: mobile ? null : play,
             trailing: SongActions(song: song),
           ),
         ),

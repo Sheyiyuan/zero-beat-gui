@@ -39,7 +39,7 @@ class _TasksBodyState extends ConsumerState<TasksBody> {
       retain: true,
       load: api.tasks,
       builder: (context, data, reload) => data.isEmpty
-          ? const Center(child: Text('暂无后台操作'))
+          ? const Center(child: Text('暂无任务'))
           : ListView(
               children: [
                 for (final task in data.reversed)
@@ -50,7 +50,7 @@ class _TasksBodyState extends ConsumerState<TasksBody> {
                             'batch.remove': '批量移除',
                             'batch.download': '准备下载',
                             'now': '同步曲库',
-                            'init': '初始化仓库',
+                            'init': '启用新同步仓库',
                             'probe': '测试连接',
                             'resolve': '应用冲突选择',
                           }[task.action] ??
@@ -94,14 +94,14 @@ class BatchResultBody extends ConsumerWidget {
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            '完成 ${data.$2.succeeded.length} · 跳过 ${data.$2.skipped.length} · 失败 ${data.$2.failed.length}',
+            '完成 ${data.$2.succeeded.length} 项 · 跳过 ${data.$2.skipped.length} 项 · 失败 ${data.$2.failed.length} 项',
           ),
           if (data.$2.failed.isNotEmpty)
             FilledButton(
               onPressed: () => perform(context, () async {
                 final task = await api.retryBatch(id);
                 if (context.mounted) {
-                  await openFeature(context, '后台操作', const TasksBody());
+                  await openFeature(context, '任务与操作结果', const TasksBody());
                 }
                 await api.waitBatch(task.id);
               }),

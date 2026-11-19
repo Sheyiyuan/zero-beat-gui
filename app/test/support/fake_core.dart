@@ -38,6 +38,8 @@ class FakeCoreApi implements CoreApi {
   int nexts = 0;
   int previouses = 0;
   int seeks = 0;
+  final seekPositions = <int>[];
+  final modes = <String>[];
   int quits = 0;
   final played = <String>[];
 
@@ -60,6 +62,10 @@ class FakeCoreApi implements CoreApi {
 
   @override
   Stream<String> get notices => _notices.stream;
+
+  void notify(String text) {
+    if (!_notices.isClosed) _notices.add(text);
+  }
 
   @override
   Future<HelloResult> hello({
@@ -165,13 +171,45 @@ class FakeCoreApi implements CoreApi {
   @override
   Future<void> seek(int positionMs) async {
     seeks += 1;
+    seekPositions.add(positionMs);
+  }
+
+  final volumes = <double>[];
+
+  @override
+  Future<void> setVolume(double volume) async {
+    volumes.add(volume);
   }
 
   @override
-  Future<void> setVolume(double volume) async {}
-
-  @override
-  Future<void> setMode(String mode) async {}
+  Future<void> setMode(String mode) async {
+    modes.add(mode);
+    final snapshot = view.snapshot;
+    view = PlayerView(
+      playbackId: view.playbackId,
+      playWhenReady: view.playWhenReady,
+      notice: view.notice,
+      noticeLevel: view.noticeLevel,
+      snapshot: PlaybackSnapshot(
+        queue: snapshot.queue,
+        index: snapshot.index,
+        current: snapshot.current,
+        state: snapshot.state,
+        positionMs: snapshot.positionMs,
+        durationMs: snapshot.durationMs,
+        mode: PlaybackMode(mode),
+        volume: snapshot.volume,
+        compDb: snapshot.compDb,
+        songCompDb: snapshot.songCompDb,
+        autoGain: snapshot.autoGain,
+        muted: snapshot.muted,
+        awaiting: snapshot.awaiting,
+        requestId: snapshot.requestId,
+        sleepUntil: snapshot.sleepUntil,
+        quality: snapshot.quality,
+      ),
+    );
+  }
 
   @override
   Future<int> enqueue(Song song) async => 1;
@@ -183,7 +221,11 @@ class FakeCoreApi implements CoreApi {
   Future<void> removeQueueAt(int index) async {}
 
   @override
-  Future<void> moveQueue(int index, int delta) async {}
+  Future<void> moveQueue(int index, int delta) async {
+    moves.add((index, delta));
+  }
+
+  final moves = <(int, int)>[];
 
   @override
   Future<void> clearQueue() async {}

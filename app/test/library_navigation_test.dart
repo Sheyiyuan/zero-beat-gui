@@ -165,7 +165,10 @@ void main() {
     await pumpApp(tester, api: api, layout: AppLayout.mobile);
     await tester.tap(find.text('我的'));
     await tester.pumpAndSettle();
-    expect(find.text('核心 0.8.0'), findsOneWidget);
+    // Version details moved to their own page; the mine body still reuses the
+    // cached hello snapshot for account rows.
+    expect(find.text('哔哩哔哩 未登录 · 网易云 未登录'), findsOneWidget);
+    expect(find.text('版本信息'), findsOneWidget);
     expect(api.helloCalls, 0);
     api.disconnect();
     await tester.pumpAndSettle();

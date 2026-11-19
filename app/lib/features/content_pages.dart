@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
@@ -46,7 +47,7 @@ Future<void> openAuthors(
                 ListTile(
                   title: Text(e.title),
                   subtitle: Text(e.subtitle),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(AppIcons.chevronRight, size: 18),
                   onTap: () => Navigator.pop(context, e),
                 ),
             ],
@@ -207,7 +208,7 @@ class _BrowseBodyState extends ConsumerState<BrowseBody> {
                     ListTile(
                       title: Text(e.title),
                       subtitle: Text(e.subtitle),
-                      trailing: const Icon(Icons.chevron_right),
+                      trailing: const Icon(AppIcons.chevronRight, size: 18),
                       onTap: () => openFeature(
                         context,
                         e.title,
@@ -243,10 +244,10 @@ class BrowseRootsBody extends ConsumerWidget {
           children: [
             for (final e in data.entries)
               ListTile(
-                leading: const Icon(Icons.podcasts),
+                leading: const Icon(AppIcons.podcast),
                 title: Text(e.title),
                 subtitle: Text(e.subtitle),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(AppIcons.chevronRight, size: 18),
                 onTap: e.ref == null
                     ? null
                     : () => openFeature(

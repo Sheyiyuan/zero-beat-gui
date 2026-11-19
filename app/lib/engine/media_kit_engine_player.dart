@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:media_kit/media_kit.dart';
 
+import 'audio_filters.dart';
 import 'engine_player.dart';
 
 class MediaKitEnginePlayer implements EnginePlayer {
@@ -63,7 +64,15 @@ class MediaKitEnginePlayer implements EnginePlayer {
     final platform = _player.platform;
     if (platform is! NativePlayer) return false;
     if (await _writeAndCheck(platform, filter, property: true)) return true;
-    return _writeAndCheck(platform, filter, property: false);
+    if (await _writeAndCheck(platform, filter, property: false)) return true;
+    await _clearFilter(platform);
+    return false;
+  }
+
+  Future<void> _clearFilter(NativePlayer platform) async {
+    try {
+      await platform.setProperty('af', '');
+    } catch (_) {}
   }
 
   Future<bool> _writeAndCheck(
@@ -133,6 +142,7 @@ class MediaKitEnginePlayer implements EnginePlayer {
     _subscriptions.add(
       _player.stream.error.listen((message) {
         if (message.isEmpty || !identical(_listener, listener)) return;
+        if (isUnsupportedAudioFilterError(message)) return;
         listener.onError(message);
       }),
     );

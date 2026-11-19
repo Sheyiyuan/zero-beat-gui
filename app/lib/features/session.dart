@@ -14,6 +14,7 @@ class LibraryState {
     this.warning = '',
     this.error = '',
     this.loading = false,
+    this.refreshing = false,
     this.loaded = false,
     this.total = 0,
     this.loadingMore = false,
@@ -27,6 +28,7 @@ class LibraryState {
   final String warning;
   final String error;
   final bool loading;
+  final bool refreshing;
   final bool loaded;
   final int total;
   final bool loadingMore;
@@ -52,6 +54,7 @@ class LibraryState {
     String? warning,
     String? error,
     bool? loading,
+    bool? refreshing,
     bool? loaded,
     int? total,
     bool? loadingMore,
@@ -69,6 +72,7 @@ class LibraryState {
       warning: warning ?? this.warning,
       error: error ?? this.error,
       loading: loading ?? this.loading,
+      refreshing: refreshing ?? this.refreshing,
       loaded: loaded ?? this.loaded,
       total: total ?? this.total,
       loadingMore: loadingMore ?? this.loadingMore,
@@ -80,6 +84,7 @@ class LibraryState {
 class LibraryController extends Notifier<LibraryState> {
   int _generation = 0;
   bool _alive = true;
+  Future<void>? _refreshInFlight;
 
   @override
   LibraryState build() {
@@ -94,7 +99,7 @@ class LibraryController extends Notifier<LibraryState> {
       if (_valid(generation)) _reload(api);
     });
     final changes = api.changes.listen((event) {
-      if (event == "library.changed" || event == "all.changed") reload();
+      if (event == "library.changed" || event == "all.changed") refresh();
     });
     ref.onDispose(changes.cancel);
     return const LibraryState(loading: true);
@@ -103,6 +108,24 @@ class LibraryController extends Notifier<LibraryState> {
   bool _valid(int generation) => _alive && generation == _generation;
 
   Future<void> reload() => _reload(ref.read(coreApiProvider));
+
+  /// Refreshes playlists and the selected playlist without dropping the rows
+  /// that are already on screen. Concurrent calls share one request so a pull
+  /// gesture and a lifecycle resume cannot race each other.
+  Future<void> refresh() async {
+    final running = _refreshInFlight;
+    if (running != null) {
+      await running;
+      return;
+    }
+    final future = reload();
+    _refreshInFlight = future;
+    try {
+      await future;
+    } finally {
+      if (identical(_refreshInFlight, future)) _refreshInFlight = null;
+    }
+  }
 
   Future<void> retry() {
     final id = state.selectedPlaylistId;
@@ -117,6 +140,7 @@ class LibraryController extends Notifier<LibraryState> {
       songs: [],
       total: 0,
       loading: true,
+      refreshing: false,
       loaded: false,
       error: '',
       moreError: '',
@@ -129,7 +153,8 @@ class LibraryController extends Notifier<LibraryState> {
 
   Future<void> _reload(CoreApi api) async {
     final generation = ++_generation;
-    state = state.copy(loading: true, error: '');
+    final keepContent = state.loaded;
+    state = state.copy(loading: true, refreshing: keepContent, error: '');
     try {
       final lists = await api.playlists();
       if (!_valid(generation)) return;
@@ -141,19 +166,40 @@ class LibraryController extends Notifier<LibraryState> {
       final selected = playlists.any((p) => p.id == state.selectedPlaylistId)
           ? state.selectedPlaylistId!
           : playlists.first.id;
-      state = LibraryState(
+      final same = selected == state.selectedPlaylistId;
+      state = state.copy(
         playlists: playlists,
         selectedPlaylistId: selected,
+        keepPlaylist: false,
+        keepSong: same,
+        selectedSongId: null,
+        songs: same ? state.songs : const <Song>[],
+        total: same ? state.total : 0,
         warning: lists.warning,
         loading: true,
+        refreshing: same && keepContent,
+        loaded: same && state.loaded,
+        moreError: '',
+        loadingMore: false,
       );
       await _loadSongs(api, selected, generation);
     } catch (error) {
       if (_valid(generation)) {
+        final message = errorText(error);
+        if (state.refreshing && state.songs.isNotEmpty) {
+          state = state.copy(
+            loading: false,
+            refreshing: false,
+            loaded: true,
+            warning: '刷新失败：$message',
+          );
+          return;
+        }
         state = state.copy(
           loading: false,
+          refreshing: false,
           loaded: true,
-          error: errorText(error),
+          error: message,
           songs: [],
         );
       }
@@ -192,6 +238,7 @@ class LibraryController extends Notifier<LibraryState> {
         songs: [if (append) ...state.songs, ...page.songs],
         total: page.total,
         loading: false,
+        refreshing: false,
         loadingMore: false,
         loaded: true,
         error: '',
@@ -199,14 +246,27 @@ class LibraryController extends Notifier<LibraryState> {
       );
     } catch (error) {
       if (!_valid(generation)) return;
-      state = append
-          ? state.copy(loadingMore: false, moreError: errorText(error))
-          : state.copy(
-              loading: false,
-              loaded: true,
-              error: errorText(error),
-              songs: [],
-            );
+      final message = errorText(error);
+      if (append) {
+        state = state.copy(loadingMore: false, moreError: message);
+        return;
+      }
+      if (state.refreshing && state.songs.isNotEmpty) {
+        state = state.copy(
+          loading: false,
+          refreshing: false,
+          loaded: true,
+          warning: '刷新失败：$message',
+        );
+        return;
+      }
+      state = state.copy(
+        loading: false,
+        refreshing: false,
+        loaded: true,
+        error: message,
+        songs: [],
+      );
     }
   }
 }
@@ -351,10 +411,10 @@ class SearchController extends Notifier<SearchState> {
         return;
       }
       final message = !link.matched
-          ? '没有匹配到可以播放的歌曲'
+          ? '未找到可播放的歌曲'
           : link.kind == 'browse'
-          ? '这是浏览链接，不会当作歌曲播放'
-          : '这个链接不能直接播放';
+          ? '这是歌单或主页链接，请打开后选择歌曲。'
+          : '此链接无法直接播放，请检查链接或搜索歌曲。';
       state = state.copy(linkMessage: message);
     } catch (error) {
       state = state.copy(linkMessage: errorText(error));
@@ -364,7 +424,11 @@ class SearchController extends Notifier<SearchState> {
   Future<void> _run(String keyword, {int page = 1}) async {
     final trimmed = keyword.trim();
     if (trimmed.isEmpty) {
-      state = state.copy(error: '请输入要搜索的关键词', submitted: true, loading: false);
+      state = state.copy(
+        error: '请输入歌曲名、歌手或关键词',
+        submitted: true,
+        loading: false,
+      );
       return;
     }
     final generation = ++_generation;
@@ -434,7 +498,9 @@ class PlayerController extends Notifier<PlayerView> {
         state = view;
       } catch (_) {}
     });
-    return playerView();
+    // The handshake already carries the persisted player snapshot. Starting
+    // from it avoids a visible 80% volume flash on every launch.
+    return api.helloResult?.player ?? playerView();
   }
 
   void show(PlayerView view) => state = view;
@@ -450,6 +516,8 @@ class NoticeController extends Notifier<String> {
     ref.onDispose(subscription.cancel);
     return '';
   }
+
+  void clear() => state = '';
 }
 
 class ConnectionController extends Notifier<bool> {
@@ -532,6 +600,33 @@ class Transport {
     } else {
       await _api.play(song: song, queue: loaded);
     }
+  }
+
+  /// Plays the whole playlist from the start. Passing the playlist id as the
+  /// batch target asks the core to shuffle the first song too when shuffle
+  /// mode is on, matching the TUI's play-playlist action.
+  Future<void> playPlaylistFromStart(
+    String playlistId,
+    List<Song> loaded,
+  ) async {
+    _touch();
+    if (_api is CoreFeatureTransport) {
+      await _api.batch('play', target: playlistId, playlistId: playlistId);
+      return;
+    }
+    var queue = loaded;
+    if (queue.isEmpty) {
+      final page = await _api.songs(
+        playlistId: playlistId,
+        offset: 0,
+        limit: 200,
+      );
+      queue = page.songs;
+    }
+    if (queue.isEmpty) {
+      throw StateError('歌单里还没有曲目');
+    }
+    await _api.play(song: queue.first, queue: queue);
   }
 
   Future<void> playSong(Song song, {List<Song>? context}) {

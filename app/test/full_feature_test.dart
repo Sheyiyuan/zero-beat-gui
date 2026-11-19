@@ -29,6 +29,17 @@ class FeatureApi extends FakeCoreApi implements CoreFeatureTransport {
   ) async {
     calls.add((method, params));
     switch (method) {
+      case 'settings.get':
+        return Preferences(
+          volume: 0.8,
+          compDb: 0,
+          autoGain: false,
+          quality: Quality.valueAuto,
+          mode: PlaybackMode.valueListLoop,
+          playingPlaylist: '',
+          localFirst: true,
+          mouse: true,
+        ).toJson();
       case 'settings.gui.get':
         return preferences.toJson();
       case 'settings.gui.set':
@@ -99,6 +110,32 @@ class FeatureApi extends FakeCoreApi implements CoreFeatureTransport {
 }
 
 void main() {
+  testWidgets('volume slider shows the current percent and persists changes', (
+    tester,
+  ) async {
+    final api = FeatureApi()
+      ..view = playerView(current: sampleSong(), volume: 0.05);
+    addTearDown(api.closeControllers);
+    await pumpApp(
+      tester,
+      api: api,
+      layout: AppLayout.desktop,
+      size: const Size(1280, 800),
+    );
+    expect(find.byKey(const Key('volume-label')), findsOneWidget);
+    expect(find.text('5%'), findsOneWidget);
+
+    await tester.drag(
+      find.byKey(const Key('volume-slider')),
+      const Offset(80, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(api.volumes, isNotEmpty);
+    expect(api.volumes.last, greaterThan(0.05));
+    expect(find.text('5%'), findsNothing);
+  });
+
   testWidgets('clip editor stays invalid after another song then same song', (
     tester,
   ) async {
@@ -124,7 +161,7 @@ void main() {
           .onPressed,
       isNull,
     );
-    expect(find.text('当前歌曲已切换，此编辑已停止。请返回后重新打开。'), findsOneWidget);
+    expect(find.text('歌曲已切换，请返回后重新打开片段编辑。'), findsOneWidget);
     expect(api.calls.where((c) => c.$1 == 'player.clip.edit'), isEmpty);
   });
   test('window restoration keeps controls on an available monitor', () {
@@ -211,7 +248,7 @@ void main() {
     await tester.pumpAndSettle();
     api.disconnect();
     await tester.pumpAndSettle();
-    expect(find.text('与核心的连接已断开，播放已停止'), findsOneWidget);
+    expect(find.text('播放服务已断开，播放已停止'), findsOneWidget);
     final button = tester.getCenter(find.byKey(const Key('play-pause')));
     await tester.tapAt(button);
     await tester.pump();
@@ -228,6 +265,7 @@ void main() {
         closeAction: 'background',
         shortcuts: {'toggle': 'P'},
         window: '',
+        haptics: true,
       );
     addTearDown(api.closeControllers);
     await pumpApp(tester, api: api, layout: AppLayout.desktop);
@@ -275,6 +313,7 @@ void main() {
         closeAction: 'background',
         shortcuts: {},
         window: '',
+        haptics: true,
       );
     addTearDown(api.closeControllers);
     await pumpApp(
@@ -285,6 +324,17 @@ void main() {
     );
     final theme = Theme.of(tester.element(find.byKey(const Key('play-pause'))));
     expect(theme.brightness, Brightness.dark);
+    await tester.tap(find.byTooltip('设置'));
+    await tester.pumpAndSettle();
+    expect(find.text('半拍蓝'), findsOneWidget);
+    await tester.tap(find.text('半拍蓝'));
+    await tester.pumpAndSettle();
+    expect(find.text('佐洛红'), findsOneWidget);
+    expect(find.text('零拍红'), findsNothing);
+    expect(find.text('寒拍蓝'), findsNothing);
+    await tester.tap(find.text('佐洛红'));
+    await tester.pumpAndSettle();
+    expect(api.preferences.palette, 'zero-red');
     expect(tester.takeException(), isNull);
   });
 }

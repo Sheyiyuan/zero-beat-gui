@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import '../platform/storage.dart';
+import '../shared/playback.dart';
 
 Future<LibraryScan?> scanAndroidFolder(
   BuildContext context,
@@ -65,7 +66,7 @@ class _ScanDialogState extends State<_ScanDialog> {
     } catch (e) {
       if (mounted && !cancelled) {
         setState(() {
-          error = '$e';
+          error = '扫描失败：${errorText(e)}';
           finished = true;
         });
       }

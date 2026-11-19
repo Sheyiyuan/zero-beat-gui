@@ -488,7 +488,7 @@ void main() {
     expect(find.text('请输入有效秒数'), findsNothing);
   });
 
-  testWidgets('unknown duration disables save until length arrives', (
+  testWidgets('unknown duration still allows an explicit clip range', (
     tester,
   ) async {
     final song = Song(
@@ -523,7 +523,7 @@ void main() {
       tester
           .widget<FilledButton>(find.widgetWithText(FilledButton, '保存片段'))
           .onPressed,
-      isNull,
+      isNotNull,
     );
     player.show(playerView(current: song, durationMs: 180000));
     await tester.pump();
@@ -555,7 +555,7 @@ void main() {
     await _pushEditor(tester, opened.container, song);
     expect(opened.container.read(displayedClipProvider)?.endMs, 8000);
     await _setClipFields(tester, '72', '90');
-    final previewButton = find.widgetWithText(OutlinedButton, '从起点试听整首');
+    final previewButton = find.widgetWithText(OutlinedButton, '试听片段');
     await tester.ensureVisible(previewButton);
     await tester.tap(previewButton);
     await tester.pump();
@@ -581,7 +581,7 @@ void main() {
     cancelButton.onPressed!.call();
     await tester.pump();
     await tester.pump();
-    expect(find.text('从起点试听整首'), findsNothing);
+    expect(find.text('试听片段'), findsNothing);
     expect(
       api.calls.where(
         (call) =>
@@ -618,7 +618,7 @@ void main() {
       );
       await _pushEditor(tester, opened.container, song);
       await _setClipFields(tester, '72', '90');
-      final previewButton = find.widgetWithText(OutlinedButton, '从起点试听整首');
+      final previewButton = find.widgetWithText(OutlinedButton, '试听片段');
       await tester.ensureVisible(previewButton);
       await tester.tap(previewButton);
       for (var i = 0; i < 20 && api.gates.isEmpty; i++) {

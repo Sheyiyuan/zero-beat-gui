@@ -82,14 +82,16 @@ PlayerView playerView({
   int index = 0,
   Song? current,
   String notice = '',
+  String? noticeLevel,
   bool playWhenReady = false,
   String? playbackId,
+  PlaybackMode mode = PlaybackMode.valueListLoop,
 }) {
   return PlayerView(
     playbackId: playbackId,
     playWhenReady: playWhenReady,
     notice: notice,
-    noticeLevel: notice.isEmpty ? '' : 'info',
+    noticeLevel: noticeLevel ?? (notice.isEmpty ? '' : 'info'),
     snapshot: PlaybackSnapshot(
       queue: queue,
       index: index,
@@ -97,7 +99,7 @@ PlayerView playerView({
       state: state,
       positionMs: positionMs,
       durationMs: durationMs,
-      mode: PlaybackMode.valueListLoop,
+      mode: mode,
       volume: volume,
       compDb: 0,
       songCompDb: 0,

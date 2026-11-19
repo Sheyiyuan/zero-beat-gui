@@ -67,6 +67,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.longPress(find.byKey(const ValueKey('title-song-1')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('多选此曲'));
+    await tester.pumpAndSettle();
     expect(find.text('已选 1 首 · 可跨页选择'), findsOneWidget);
     change(() => page = 2);
     await tester.pumpAndSettle();
@@ -84,9 +86,56 @@ void main() {
     ]);
     await tester.longPress(find.byKey(const ValueKey('title-song-2')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('多选此曲'));
+    await tester.pumpAndSettle();
     change(() => target = 'artist-b');
     await tester.pumpAndSettle();
     expect(find.byType(Checkbox), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('mobile long press opens the bottom action sheet', (
+    tester,
+  ) async {
+    final api = FeatureApi();
+    addTearDown(api.closeControllers);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          coreApiProvider.overrideWithValue(api),
+          platformLabelProvider.overrideWithValue('android'),
+        ],
+        child: MaterialApp(
+          theme: buildZeroTheme(),
+          home: Scaffold(
+            body: SongSelectionScope(
+              target: 'mobile',
+              child: Column(
+                children: [
+                  const SongSelectionBar(),
+                  FeatureSong(song: sampleSong()),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('title-song-1'))),
+    );
+    await tester.pump(const Duration(milliseconds: 800));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('多选此曲'),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('多选此曲'));
+    await tester.pumpAndSettle();
+    expect(find.text('已选 1 首 · 可跨页选择'), findsOneWidget);
   });
 }

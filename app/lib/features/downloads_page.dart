@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import '../app/providers.dart';
+import '../shared/refreshable.dart';
 import 'navigation.dart';
 import 'tasks_page.dart';
 import 'session.dart';
@@ -57,7 +59,7 @@ class _DownloadsBodyState extends ConsumerState<DownloadsBody> {
             action == 'delete_file' ? '删除音频文件' : '移除下载记录',
             action == 'delete_file'
                 ? '将删除「${entry.song?.title ?? d.songId}」的文件和下载记录。'
-                : '文件会保留，歌曲将不再优先使用此下载。',
+                : '文件会保留，播放时将不再优先使用这个下载文件。',
           )) {
             await api.downloadAction(action, songId: d.songId);
           }
@@ -99,21 +101,23 @@ class _DownloadsBodyState extends ConsumerState<DownloadsBody> {
   @override
   Widget build(BuildContext context) {
     final api = ref.read(coreApiProvider);
-    return AsyncFeature<(List<DownloadTask>, List<DownloadEntry>)>(
+    return RefreshableFeature<(List<DownloadTask>, List<DownloadEntry>)>(
       target: version,
       retain: true,
       load: () async => (await api.downloadTasks(), await api.downloads()),
-      builder: (context, data, reload) => ListView(
+      builder: (context, data, reload) => RefreshableListView(
+        key: const Key('downloads-refresh'),
+        onRefresh: reload,
         padding: const EdgeInsets.all(16),
         children: [
           ListTile(
-            title: const Text('后台操作与批量结果'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => openFeature(context, '后台操作', const TasksBody()),
+            title: const Text('任务与操作结果'),
+            trailing: const Icon(AppIcons.chevronRight, size: 18),
+            onTap: () => openFeature(context, '任务与操作结果', const TasksBody()),
           ),
           Row(
             children: [
-              const Expanded(child: Text('下载任务 · 同时最多两首')),
+              const Expanded(child: Text('下载任务 · 最多同时下载 2 首')),
               TextButton(
                 onPressed: () =>
                     perform(context, () => api.downloadAction('cancel_all')),
@@ -130,7 +134,7 @@ class _DownloadsBodyState extends ConsumerState<DownloadsBody> {
                   children: [
                     Text(task.song.title),
                     Text(
-                      '${{'queued': '等待下载', 'running': '下载中', 'failed': '下载未完成', 'completed': '已完成'}[task.state]} · ${task.done} / ${task.total} 字节',
+                      '${{'queued': '等待下载', 'running': '下载中', 'failed': '下载失败', 'completed': '已完成'}[task.state]} · ${task.done} / ${task.total} 字节',
                     ),
                     if (task.state == 'running')
                       LinearProgressIndicator(
@@ -148,7 +152,7 @@ class _DownloadsBodyState extends ConsumerState<DownloadsBody> {
                               () =>
                                   api.downloadAction('retry', taskId: task.id),
                             ),
-                            child: const Text('重试／续传'),
+                            child: const Text('继续下载'),
                           ),
                         if (task.state == 'running' || task.state == 'queued')
                           TextButton(
@@ -192,14 +196,14 @@ class _DownloadsBodyState extends ConsumerState<DownloadsBody> {
                       .toList();
                   await api.downloadSelection(songs: songs);
                 }),
-                child: const Text('补全缺失文件'),
+                child: const Text('重新下载缺失文件'),
               ),
             ],
           ),
           if (data.$2.isEmpty)
             const Padding(
               padding: EdgeInsets.all(24),
-              child: Text('还没有下载。在歌曲菜单或歌单多选中选择“下载”。'),
+              child: Text('还没有下载歌曲。打开歌曲菜单或在歌单中多选后，选择「下载」。'),
             ),
           for (final entry in data.$2)
             ListTile(
@@ -220,10 +224,7 @@ class _DownloadsBodyState extends ConsumerState<DownloadsBody> {
                     child: Text(Platform.isAndroid ? '导出到系统音乐' : '另存为'),
                   ),
                   if (Platform.isAndroid)
-                    const PopupMenuItem(
-                      value: 'save_as',
-                      child: Text('另存到指定位置'),
-                    ),
+                    const PopupMenuItem(value: 'save_as', child: Text('另存为')),
                   const PopupMenuItem(value: 'share', child: Text('分享')),
                   if (!Platform.isAndroid)
                     const PopupMenuItem(

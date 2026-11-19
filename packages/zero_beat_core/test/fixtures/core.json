@@ -113,7 +113,8 @@
         "accent": "",
         "close_action": "background",
         "shortcuts": {},
-        "window": ""
+        "window": "",
+        "haptics": true
       }
     },
     {

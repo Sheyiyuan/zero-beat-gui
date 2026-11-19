@@ -309,6 +309,7 @@ final class GUISettings {
   final String closeAction;
   final Map<String, String> shortcuts;
   final String window;
+  final bool haptics;
   GUISettings({
     required String theme,
     required String palette,
@@ -316,12 +317,14 @@ final class GUISettings {
     required String closeAction,
     required Map<String, String> shortcuts,
     required String window,
+    required bool haptics,
   }) : theme = theme,
        palette = palette,
        accent = accent,
        closeAction = closeAction,
        shortcuts = Map<String, String>.unmodifiable(shortcuts),
-       window = window;
+       window = window,
+       haptics = haptics;
   factory GUISettings.fromJson(Map<String, Object?> json) => GUISettings(
     theme: readString(json['theme'], 'GUISettings.theme'),
     palette: readString(json['palette'], 'GUISettings.palette'),
@@ -329,6 +332,7 @@ final class GUISettings {
     closeAction: readString(json['close_action'], 'GUISettings.close_action'),
     shortcuts: readStringMap(json['shortcuts'], 'GUISettings.shortcuts'),
     window: readString(json['window'], 'GUISettings.window'),
+    haptics: readBool(json['haptics'], 'GUISettings.haptics'),
   );
   Map<String, Object?> toJson() => {
     'theme': theme,
@@ -337,6 +341,7 @@ final class GUISettings {
     'close_action': closeAction,
     'shortcuts': shortcuts,
     'window': window,
+    'haptics': haptics,
   };
 }
 

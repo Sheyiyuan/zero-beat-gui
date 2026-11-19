@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
@@ -8,7 +9,13 @@ import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import '../app/chrome.dart';
 import '../app/providers.dart';
 import '../app/theme.dart';
+import '../core/developer_log.dart';
+import '../shared/account_status.dart';
+import '../shared/song_tile.dart';
+import '../shared/playback.dart';
+import '../shared/refreshable.dart';
 import 'navigation.dart';
+import 'session.dart';
 import 'web_login_page.dart';
 import 'web_login_policy.dart';
 
@@ -20,10 +27,18 @@ class AccountsBody extends ConsumerStatefulWidget {
 
 class _AccountsBodyState extends ConsumerState<AccountsBody> {
   StreamSubscription<String>? events;
+  final Map<String, bool> _seenLoggedIn = {};
+  bool _refreshNext = false;
   int version = 0;
   @override
   void initState() {
     super.initState();
+    final hello = ref.read(helloProvider).result;
+    for (final entry
+        in hello?.accounts.entries ??
+            const <MapEntry<String, AccountBrief>>[]) {
+      _seenLoggedIn[entry.key] = entry.value.loggedIn;
+    }
     events = ref.read(coreApiProvider).changes.listen((kind) {
       if (mounted && (kind == 'auth.changed' || kind == 'all.changed')) {
         setState(() => version++);
@@ -37,44 +52,59 @@ class _AccountsBodyState extends ConsumerState<AccountsBody> {
     super.dispose();
   }
 
+  Future<List<SourceInfo>> _load() async {
+    final refresh = _refreshNext;
+    _refreshNext = false;
+    final sources = await ref.read(coreApiProvider).accounts(refresh: refresh);
+    for (final source in sources) {
+      if (source.user.loggedIn) _seenLoggedIn[source.id.value] = true;
+    }
+    return sources
+        .where((source) => source.capabilities.names.contains('account'))
+        .toList();
+  }
+
   @override
-  Widget build(BuildContext context) => AsyncFeature<List<SourceInfo>>(
+  Widget build(BuildContext context) => RefreshableFeature<List<SourceInfo>>(
     target: version,
     retain: true,
-    load: () => ref.read(coreApiProvider).accounts(),
-    builder: (context, data, reload) => ListView(
+    load: _load,
+    builder: (context, data, reload) => RefreshableListView(
+      key: const Key('accounts-refresh'),
+      onRefresh: () {
+        _refreshNext = true;
+        return reload();
+      },
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         const Padding(
           padding: EdgeInsets.fromLTRB(4, 4, 4, 12),
-          child: Text('登录后可以导入歌单和查看需要登录的内容。未登录时仍可匿名播放公开内容。'),
+          child: Text('登录后可导入平台歌单、查看收藏和评论；未登录仍可播放公开内容。'),
         ),
         const SizedBox(height: 8),
         InsetGroup(
           children: [
-            for (final s in data.where(
-              (s) => s.capabilities.names.contains('account'),
-            ))
+            for (final s in data)
               ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: context.zero.accentSoft,
-                  foregroundColor: context.zero.accent,
-                  child: Text(_accountMark(s.mark, s.name)),
-                ),
-                title: Text(s.name),
+                leading: PlatformSourceIcon(source: s.id, size: 36),
+                title: Text(accountDisplayName(s.id.value, s.name)),
                 subtitle: Text(
-                  s.user.loggedIn
-                      ? (s.user.name.isEmpty ? '已登录' : s.user.name)
-                      : '未登录，可以匿名使用',
+                  accountLoginStatus(
+                    loggedIn: s.user.loggedIn,
+                    name: s.user.name,
+                    expired:
+                        !s.user.loggedIn && _seenLoggedIn[s.id.value] == true,
+                  ),
                 ),
                 trailing: TextButton(
                   onPressed: () => perform(context, () async {
                     final api = ref.read(coreApiProvider);
+                    final title = accountDisplayName(s.id.value, s.name);
                     if (s.user.loggedIn) {
                       if (!await confirmAction(
                         context,
-                        '退出 ${s.name}',
-                        '此来源的导入歌单将冻结，缓存曲目和混合引用保留。',
+                        '退出$title账号',
+                        '该平台的导入歌单会停止同步，已缓存内容和混合歌单保留。',
                       )) {
                         return;
                       }
@@ -82,8 +112,8 @@ class _AccountsBodyState extends ConsumerState<AccountsBody> {
                     } else {
                       await openFeature(
                         context,
-                        '登录 ${s.name}',
-                        LoginOptions(source: s.id.value, title: s.name),
+                        '登录 $title',
+                        LoginOptions(source: s.id.value, title: title),
                       );
                     }
                     if (context.mounted) reload();
@@ -96,12 +126,6 @@ class _AccountsBodyState extends ConsumerState<AccountsBody> {
       ],
     ),
   );
-}
-
-String _accountMark(String mark, String name) {
-  if (mark.isNotEmpty) return mark;
-  if (name.isEmpty) return '音';
-  return String.fromCharCode(name.runes.first);
 }
 
 class LoginOptions extends StatelessWidget {
@@ -129,9 +153,9 @@ class LoginOptions extends StatelessWidget {
         );
     final device = _LoginChoice(
       key: const Key('login-on-device'),
-      icon: Icons.phonelink_lock_outlined,
+      icon: AppIcons.deviceLogin,
       title: '在本机登录',
-      detail: '打开$title的官方页面，在这台设备上完成登录。不需要另一台设备来扫码。',
+      detail: '在$title官方页面登录，无需另一台设备。',
       filled: onDevice,
       onPressed: () {
         Navigator.of(context).push(
@@ -148,16 +172,29 @@ class LoginOptions extends StatelessWidget {
     );
     final qr = _LoginChoice(
       key: const Key('login-qr'),
-      icon: Icons.qr_code_2,
-      title: '二维码',
-      detail: '适合桌面：用手机上的$title App 扫描。手机上看不到自己屏幕上的码。',
+      icon: AppIcons.qr,
+      title: '扫码登录',
+      detail: '使用另一台设备上的$title App 扫描二维码。',
       filled: !onDevice,
       onPressed: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (context) => Scaffold(
               backgroundColor: context.zero.canvas,
-              appBar: AppBar(title: Text('扫码登录$title')),
+              appBar: AppBar(
+                title: Row(
+                  children: [
+                    PlatformSourceIcon(source: SourceID(source), size: 28),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '扫码登录$title',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               body: QRLoginBody(source: source),
             ),
           ),
@@ -168,8 +205,18 @@ class LoginOptions extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
+        Row(
+          children: [
+            PlatformSourceIcon(source: SourceID(source), size: 44),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Text(
-          '密码只留在官方页面里。零拍只在登录成功后接收会话，不会出现在界面或日志中。',
+          '密码仅在平台官方页面输入，零拍只保存登录信息。',
           style: TextStyle(color: context.zero.muted, height: 1.45),
         ),
         const SizedBox(height: 16),
@@ -275,14 +322,15 @@ class _QRLoginBodyState extends ConsumerState<QRLoginBody> {
       setState(() {
         qr = v;
         busy = false;
-        message = '请用另一台设备上的 App 扫描';
+        message = '请用另一台设备上的平台 App 扫码';
       });
       _schedule(g);
     } catch (e) {
+      DeveloperLog.instance.error('登录', '获取二维码失败：${errorText(e)}');
       if (mounted && g == generation) {
         setState(() {
           busy = false;
-          message = '$e';
+          message = '获取二维码失败：${errorText(e)}';
           expired = true;
         });
       }
@@ -309,9 +357,10 @@ class _QRLoginBodyState extends ConsumerState<QRLoginBody> {
       });
       if (!expired) _schedule(g);
     } catch (e) {
+      DeveloperLog.instance.error('登录', '登录失败：${errorText(e)}');
       if (mounted && g == generation) {
         setState(() {
-          message = '$e';
+          message = '登录失败：${errorText(e)}';
           expired = true;
         });
       }
@@ -336,7 +385,7 @@ class _QRLoginBodyState extends ConsumerState<QRLoginBody> {
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 8),
           Text(
-            '手机上请返回，改用「在本机登录」。二维码需要另一台设备才能看到并扫描。',
+            '只有一台设备时，请返回并选择「在本机登录」。',
             textAlign: TextAlign.center,
             style: TextStyle(color: context.zero.muted, height: 1.4),
           ),

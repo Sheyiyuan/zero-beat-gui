@@ -74,7 +74,7 @@ void main() {
         ),
       );
       final filled = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, '二维码'),
+        find.widgetWithText(FilledButton, '扫码登录'),
       );
       expect(filled.onPressed, isNotNull);
     } finally {

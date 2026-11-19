@@ -7,12 +7,14 @@ import '../features/accounts_page.dart';
 import '../features/content_pages.dart';
 import '../features/settings_page.dart';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/providers.dart';
 import '../app/theme.dart';
 import '../features/session.dart';
 import '../platform/desktop_mode.dart';
+import '../shared/cover_art.dart';
 import '../shared/library_pane.dart';
 import '../shared/playback.dart';
 import '../shared/player_bar.dart';
@@ -91,6 +93,9 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   final _scope = FocusNode(debugLabel: 'desktop-scope');
   bool _nowPlaying = false;
   final _navigatorKey = GlobalKey<NavigatorState>();
+  late final _dismissNowPlaying = _DismissNowPlayingObserver(() {
+    if (mounted && _nowPlaying) setState(() => _nowPlaying = false);
+  });
 
   static const _intents = <String, Intent>{
     'authors': AuthorsIntent(),
@@ -231,6 +236,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
               return _DesktopFrame(
                 scaffoldKey: _scaffoldKey,
                 navigatorKey: _navigatorKey,
+                observers: [_dismissNowPlaying],
                 nowPlaying: _nowPlaying,
                 onOpenNowPlaying: () =>
                     setState(() => _nowPlaying = !_nowPlaying),
@@ -244,10 +250,24 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   }
 }
 
+/// The desktop now-playing overlay lives above the nested feature navigator.
+/// A feature opened from it would otherwise be hidden behind the overlay.
+class _DismissNowPlayingObserver extends NavigatorObserver {
+  _DismissNowPlayingObserver(this.onPush);
+
+  final VoidCallback onPush;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (previousRoute != null) onPush();
+  }
+}
+
 class _DesktopFrame extends ConsumerWidget {
   const _DesktopFrame({
     required this.scaffoldKey,
     required this.navigatorKey,
+    required this.observers,
     required this.nowPlaying,
     required this.onOpenNowPlaying,
     required this.onCloseNowPlaying,
@@ -255,6 +275,7 @@ class _DesktopFrame extends ConsumerWidget {
 
   final GlobalKey<ScaffoldState> scaffoldKey;
   final GlobalKey<NavigatorState> navigatorKey;
+  final List<NavigatorObserver> observers;
   final bool nowPlaying;
   final VoidCallback onOpenNowPlaying;
   final VoidCallback onCloseNowPlaying;
@@ -289,15 +310,29 @@ class _DesktopFrame extends ConsumerWidget {
           Wrap(
             children: [
               IconButton(
+                key: const Key('library-refresh-sidebar'),
+                tooltip: '刷新歌单',
+                onPressed: library.refreshing
+                    ? null
+                    : () => refreshPlaylistNow(context, ref),
+                icon: library.refreshing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(AppIcons.refresh),
+              ),
+              IconButton(
                 tooltip: '下载管理',
-                icon: const Icon(Icons.download_outlined),
+                icon: const Icon(AppIcons.download),
                 onPressed: () =>
                     openFeature(context, '下载管理', const DownloadsBody()),
               ),
               IconButton(
-                tooltip: '仓库同步',
-                icon: const Icon(Icons.sync),
-                onPressed: () => openFeature(context, '仓库同步', const SyncBody()),
+                tooltip: '曲库同步',
+                icon: const Icon(AppIcons.sync),
+                onPressed: () => openFeature(context, '曲库同步', const SyncBody()),
               ),
               LibraryTools(
                 playlist: library.playlists
@@ -306,7 +341,7 @@ class _DesktopFrame extends ConsumerWidget {
               ),
               IconButton(
                 tooltip: '本地搜索',
-                icon: const Icon(Icons.manage_search),
+                icon: const Icon(AppIcons.localSearch),
                 onPressed: () => openFeature(
                   context,
                   '本地曲库搜索',
@@ -315,19 +350,19 @@ class _DesktopFrame extends ConsumerWidget {
               ),
               IconButton(
                 tooltip: '发现与电台',
-                icon: const Icon(Icons.explore_outlined),
+                icon: const Icon(AppIcons.discover),
                 onPressed: () =>
                     openFeature(context, '发现与电台', const BrowseRootsBody()),
               ),
               IconButton(
                 tooltip: '账号',
-                icon: const Icon(Icons.person_outline),
+                icon: const Icon(AppIcons.person),
                 onPressed: () =>
                     openFeature(context, '账号', const AccountsBody()),
               ),
               IconButton(
                 tooltip: '设置',
-                icon: const Icon(Icons.settings_outlined),
+                icon: const Icon(AppIcons.settings),
                 onPressed: () =>
                     openFeature(context, '设置', const SettingsBody()),
               ),
@@ -335,18 +370,15 @@ class _DesktopFrame extends ConsumerWidget {
           ),
           Expanded(
             child: ListView.builder(
+              key: const PageStorageKey('desktop-playlists'),
               itemCount: library.playlists.length,
               itemBuilder: (context, index) {
                 final playlist = library.playlists[index];
                 final selected = playlist.id == library.selectedPlaylistId;
-                return ListTile(
+                return PlaylistRow(
+                  key: ValueKey('playlist-item-${playlist.id}'),
+                  playlist: playlist,
                   selected: selected,
-                  selectedTileColor: context.zero.accentSoft,
-                  title: Text(
-                    playlist.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                   onTap: () {
                     if (narrow) scaffoldKey.currentState?.closeDrawer();
                     navigatorKey.currentState?.popUntil(
@@ -393,7 +425,7 @@ class _DesktopFrame extends ConsumerWidget {
                               children: [
                                 IconButton(
                                   tooltip: '展开曲库',
-                                  icon: const Icon(Icons.menu),
+                                  icon: const Icon(AppIcons.menu),
                                   onPressed: () =>
                                       scaffoldKey.currentState?.openDrawer(),
                                 ),
@@ -404,6 +436,7 @@ class _DesktopFrame extends ConsumerWidget {
                         Expanded(
                           child: Navigator(
                             key: navigatorKey,
+                            observers: observers,
                             onGenerateRoute: (_) => MaterialPageRoute(
                               builder: (context) => Consumer(
                                 builder: (context, ref, _) {
@@ -435,7 +468,6 @@ class _DesktopFrame extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  Divider(height: 1),
                   PlayerBar(
                     onOpen: onOpenNowPlaying,
                     onQueue: () => scaffoldKey.currentState?.openEndDrawer(),
@@ -453,7 +485,7 @@ class _DesktopFrame extends ConsumerWidget {
                           child: IconButton(
                             tooltip: '关闭',
                             onPressed: onCloseNowPlaying,
-                            icon: Icon(Icons.close),
+                            icon: Icon(AppIcons.close),
                           ),
                         ),
                         Expanded(child: NowPlayingBody()),
@@ -478,8 +510,7 @@ class _MiniPlayer extends ConsumerWidget {
     final song = view.snapshot.current;
     final title = song?.title.isNotEmpty == true ? song!.title : '未在播放';
     final transport = ref.read(transportProvider);
-    return Material(
-      color: context.zero.surface,
+    return PlayerCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(
@@ -498,24 +529,24 @@ class _MiniPlayer extends ConsumerWidget {
                 IconButton(
                   tooltip: '上一首',
                   onPressed: transport.previous,
-                  icon: Icon(Icons.skip_previous),
+                  icon: Icon(AppIcons.previous),
                 ),
                 PlayPauseButton(),
                 IconButton(
                   tooltip: '下一首',
                   onPressed: transport.next,
-                  icon: Icon(Icons.skip_next),
+                  icon: Icon(AppIcons.next),
                 ),
                 IconButton(
                   tooltip: '恢复',
                   onPressed: DesktopMode.restore,
-                  icon: Icon(Icons.open_in_full),
+                  icon: Icon(AppIcons.expandWindow),
                 ),
                 IconButton(
                   key: Key('quit'),
                   tooltip: '退出',
                   onPressed: () => ref.read(quitActionProvider)(),
-                  icon: Icon(Icons.close),
+                  icon: Icon(AppIcons.close),
                 ),
               ],
             ),

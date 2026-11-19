@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:window_manager/window_manager.dart';
 import 'desktop_window.dart';
 
@@ -67,7 +68,7 @@ class _ZeroWindowFrameState extends State<ZeroWindowFrame> with WindowListener {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.graphic_eq,
+                                AppIcons.waveform,
                                 size: 19,
                                 color: colors.primary,
                               ),
@@ -87,20 +88,22 @@ class _ZeroWindowFrameState extends State<ZeroWindowFrame> with WindowListener {
                     IconButton(
                       tooltip: '最小化',
                       onPressed: () => windowManager.minimize(),
-                      icon: const Icon(Icons.remove, size: 18),
+                      icon: const Icon(AppIcons.minus, size: 18),
                     ),
                     IconButton(
                       tooltip: _maximized ? '还原' : '最大化',
                       onPressed: _toggle,
                       icon: Icon(
-                        _maximized ? Icons.filter_none : Icons.crop_square,
+                        _maximized
+                            ? AppIcons.restoreWindow
+                            : AppIcons.maximizeWindow,
                         size: 17,
                       ),
                     ),
                     IconButton(
                       tooltip: '关闭窗口',
                       onPressed: DesktopWindow.closeWindow,
-                      icon: const Icon(Icons.close, size: 19),
+                      icon: const Icon(AppIcons.close, size: 19),
                     ),
                   ],
                 ),

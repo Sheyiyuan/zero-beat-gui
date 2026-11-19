@@ -44,6 +44,23 @@ void main() {
     expect(timeoutFor(RpcMethod.openLink), const Duration(seconds: 20));
   });
 
+  test(
+    'hello response larger than the pre-auth request cap is accepted',
+    () async {
+      final harness = await PeerHarness.start();
+      addTearDown(harness.close);
+      final payload = _helloResult(queueLength: 120);
+      expect(
+        utf8.encode(jsonEncode(payload)).length,
+        greaterThan(rpcHelloFrameBytes),
+      );
+
+      final peer = await harness.handshake(helloResult: payload);
+      expect(peer.client.connected, isTrue);
+      expect(peer.client.helloResult!.player.snapshot.queue, hasLength(120));
+    },
+  );
+
   test('position frames coalesce and reliable overflow is visible', () {
     final box = FrameOutbox(limit: 2);
     expect(
@@ -339,7 +356,10 @@ class PeerHarness {
     return waiter.future;
   }
 
-  Future<OpenedPeer> handshake({int queueLimit = 64}) async {
+  Future<OpenedPeer> handshake({
+    int queueLimit = 64,
+    Map<String, Object?>? helloResult,
+  }) async {
     final opening = openCore(
       host: host,
       platform: 'linux',
@@ -359,7 +379,7 @@ class PeerHarness {
     if (helloId is! int || !helloId.isOdd) {
       fail('hello id must be an odd integer, got $helloId');
     }
-    socket.write('${jsonEncode(_helloResult())}\n');
+    socket.write('${jsonEncode(helloResult ?? _helloResult())}\n');
     final client = await opening as RpcClient;
     return OpenedPeer(client, socket, reader, hello);
   }
@@ -389,7 +409,7 @@ class PeerHarness {
   Future<void> close() => server.close();
 }
 
-Map<String, Object?> _helloResult() => {
+Map<String, Object?> _helloResult({int queueLength = 0}) => {
   'jsonrpc': '2.0',
   'id': 1,
   'result': {
@@ -408,13 +428,28 @@ Map<String, Object?> _helloResult() => {
       'play_when_ready': false,
       'notice': '',
       'notice_level': '',
-      'snapshot': _snapshot(),
+      'snapshot': _snapshot(queueLength: queueLength),
     },
   },
 };
 
-Map<String, Object?> _snapshot() => {
-  'queue': <Object?>[],
+Map<String, Object?> _snapshot({int queueLength = 0}) => {
+  'queue': [
+    for (var i = 0; i < queueLength; i++)
+      {
+        'id': 'bilibili:BV${i.toString().padLeft(8, '0')}:1',
+        'source': 'bilibili',
+        'remote_id': 'BV${i.toString().padLeft(8, '0')}',
+        'page': 1,
+        'cid': '${1000 + i}',
+        'title': '回归测试队列曲目 $i',
+        'artist': 'zero-beat',
+        'album': '',
+        'duration_ms': 180000,
+        'cover': 'https://example.invalid/cover.jpg',
+        'added_at': null,
+      },
+  ],
   'index': 0,
   'current': null,
   'state': 'idle',

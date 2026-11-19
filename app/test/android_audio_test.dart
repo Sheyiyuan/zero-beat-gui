@@ -91,4 +91,157 @@ void main() {
     expect(api.toggles, 0);
     expect(api.resumes, 2);
   });
+
+  test('media controls keep transport compact and expose restart/mode', () {
+    final api = FakeCoreApi();
+    final handler = ZeroAudioHandler(
+      api,
+      InterruptionPolicy(),
+      AudioFocusCoordinator((_) async => true),
+    );
+    addTearDown(handler.shutdown);
+    addTearDown(api.closeControllers);
+    handler.publish(
+      playerView(
+        current: sampleSong(),
+        state: PlaybackStatus.valuePaused,
+        mode: PlaybackMode.valueLoopOne,
+      ),
+    );
+
+    final state = handler.playbackState.value;
+    expect(state.androidCompactActionIndices, [0, 1, 2]);
+    expect(state.controls.take(3).map((control) => control.action).toList(), [
+      MediaAction.skipToPrevious,
+      MediaAction.play,
+      MediaAction.skipToNext,
+    ]);
+    expect(
+      state.controls
+          .map((control) => control.customAction?.name)
+          .whereType<String>(),
+      containsAll([
+        ZeroAudioHandler.restartAction,
+        ZeroAudioHandler.cycleModeAction,
+      ]),
+    );
+    expect(state.repeatMode, AudioServiceRepeatMode.one);
+    expect(state.shuffleMode, AudioServiceShuffleMode.none);
+    expect(
+      state.systemActions,
+      containsAll([
+        MediaAction.setRepeatMode,
+        MediaAction.setShuffleMode,
+        MediaAction.seek,
+      ]),
+    );
+  });
+
+  test('restart control seeks to zero without changing play state', () async {
+    final api = FakeCoreApi();
+    final handler = ZeroAudioHandler(
+      api,
+      InterruptionPolicy(),
+      AudioFocusCoordinator((_) async => true),
+    );
+    addTearDown(handler.shutdown);
+    addTearDown(api.closeControllers);
+    handler.publish(
+      playerView(
+        current: sampleSong(),
+        state: PlaybackStatus.valuePlaying,
+        positionMs: 42000,
+        playWhenReady: true,
+      ),
+    );
+
+    await handler.customAction(ZeroAudioHandler.restartAction);
+
+    expect(api.seekPositions, [0]);
+    expect(api.pauses, 0);
+    expect(api.resumes, 0);
+    expect(api.toggles, 0);
+    expect(handler.playbackState.value.playing, isTrue);
+  });
+
+  test('mode control cycles list, one, shuffle and ordered', () async {
+    final api = FakeCoreApi();
+    final handler = ZeroAudioHandler(
+      api,
+      InterruptionPolicy(),
+      AudioFocusCoordinator((_) async => true),
+    );
+    addTearDown(handler.shutdown);
+    addTearDown(api.closeControllers);
+    var mode = PlaybackMode.valueListLoop;
+    for (final want in [
+      PlaybackMode.valueLoopOne,
+      PlaybackMode.valueShuffle,
+      PlaybackMode.valueOrdered,
+      PlaybackMode.valueListLoop,
+    ]) {
+      handler.publish(
+        playerView(
+          current: sampleSong(),
+          state: PlaybackStatus.valuePaused,
+          mode: mode,
+        ),
+      );
+      await handler.customAction(ZeroAudioHandler.cycleModeAction);
+      expect(api.modes.last, want.value);
+      mode = want;
+    }
+    expect(ZeroAudioHandler.nextPlaybackMode('unexpected'), 'list_loop');
+  });
+
+  test('standard repeat and shuffle controls map onto app modes', () async {
+    final api = FakeCoreApi();
+    final handler = ZeroAudioHandler(
+      api,
+      InterruptionPolicy(),
+      AudioFocusCoordinator((_) async => true),
+    );
+    addTearDown(handler.shutdown);
+    addTearDown(api.closeControllers);
+
+    handler.publish(playerView(mode: PlaybackMode.valueListLoop));
+    await handler.setRepeatMode(AudioServiceRepeatMode.one);
+    expect(api.modes, ['loop_one']);
+
+    handler.publish(playerView(mode: PlaybackMode.valueLoopOne));
+    await handler.setRepeatMode(AudioServiceRepeatMode.all);
+    expect(api.modes.last, 'list_loop');
+
+    handler.publish(playerView(mode: PlaybackMode.valueListLoop));
+    await handler.setRepeatMode(AudioServiceRepeatMode.none);
+    expect(api.modes.last, 'ordered');
+
+    handler.publish(playerView(mode: PlaybackMode.valueOrdered));
+    await handler.setShuffleMode(AudioServiceShuffleMode.all);
+    expect(api.modes.last, 'shuffle');
+
+    handler.publish(playerView(mode: PlaybackMode.valueShuffle));
+    await handler.setShuffleMode(AudioServiceShuffleMode.none);
+    expect(api.modes.last, 'ordered');
+
+    // 标准面板关闭随机时恢复进入随机前的模式，而不是固定顺序播放。
+    handler.publish(playerView(mode: PlaybackMode.valueLoopOne));
+    await handler.setShuffleMode(AudioServiceShuffleMode.all);
+    expect(api.modes.last, 'shuffle');
+    handler.publish(playerView(mode: PlaybackMode.valueShuffle));
+    await handler.setShuffleMode(AudioServiceShuffleMode.none);
+    expect(api.modes.last, 'loop_one');
+
+    // 随机状态下 repeat=none 只表示“不额外重复”，不能把随机关掉。
+    handler.publish(playerView(mode: PlaybackMode.valueShuffle));
+    final calls = api.modes.length;
+    await handler.setRepeatMode(AudioServiceRepeatMode.none);
+    expect(api.modes, hasLength(calls));
+
+    // 标准面板可能重复上报同一模式；不要产生多余 RPC。
+    handler.publish(playerView(mode: PlaybackMode.valueOrdered));
+    final orderedCalls = api.modes.length;
+    await handler.setShuffleMode(AudioServiceShuffleMode.none);
+    expect(api.modes, hasLength(orderedCalls));
+  });
 }

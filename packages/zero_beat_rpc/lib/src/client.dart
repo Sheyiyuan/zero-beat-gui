@@ -204,7 +204,6 @@ class RpcClient implements CoreApi, CoreFeatureTransport {
 
   bool _alive = true;
   bool _connected = false;
-  bool _helloDone = false;
   bool _dropping = false;
   int _next = 1;
   String? _playbackId;
@@ -238,7 +237,6 @@ class RpcClient implements CoreApi, CoreFeatureTransport {
       throw RpcException(RpcCode.version, '需要升级客户端', data: {'api': result.api});
     }
     _helloResult = result;
-    _helloDone = true;
     _connected = true;
     _connections.add(true);
     _playbackId = result.player.playbackId;
@@ -580,7 +578,10 @@ class RpcClient implements CoreApi, CoreFeatureTransport {
 
   void _onData(List<int> data) {
     if (!_alive) return;
-    final limit = _helloDone ? rpcMaxFrameBytes : rpcHelloFrameBytes;
+    // The 16 KiB hello cap applies to the server's pre-auth request read. The
+    // hello response already contains the full player snapshot (which grows
+    // with the restored queue), so inbound lines use the normal 8 MiB limit.
+    const limit = rpcMaxFrameBytes;
     for (final byte in data) {
       if (byte == 10) {
         var text = utf8.decode(_buffer);

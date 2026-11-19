@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../app/icons.dart';
 import 'package:flutter/services.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +10,10 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import '../app/providers.dart';
+import '../shared/brand_mark.dart';
 import '../app/theme.dart';
+import '../core/developer_log.dart';
+import '../shared/playback.dart';
 import 'web_login_policy.dart';
 
 typedef WebCookieReader =
@@ -58,7 +62,7 @@ class WebLoginPage extends ConsumerStatefulWidget {
 class _WebLoginPageState extends ConsumerState<WebLoginPage> {
   WebViewController? _controller;
   Timer? _timer;
-  String _hint = '在官方页面完成登录。零拍不读取密码，只在登录成功后保存会话。';
+  String _hint = '请在官方页面登录。零拍不读取密码，仅保存登录信息。';
   bool _busy = false;
   bool _done = false;
   bool _browserReady = false;
@@ -135,8 +139,9 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
     try {
       found = await reader(loginCookieUrls(widget.source));
     } catch (_) {
+      DeveloperLog.instance.warning('登录', '无法读取系统 Cookie');
       if (mounted && !_done) {
-        setState(() => _hint = '暂时无法读取登录状态，可稍后点「我已完成登录」。');
+        setState(() => _hint = '暂时无法确认登录状态，请稍后点「我已完成登录」。');
       }
       return;
     }
@@ -148,7 +153,7 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
     }
     setState(() {
       _busy = true;
-      _hint = '正在校验登录';
+      _hint = '正在确认登录状态';
     });
     try {
       final result = await ref
@@ -162,10 +167,11 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
       Navigator.pop(context, result.loggedIn);
     } catch (error) {
       cookies.clear();
+      DeveloperLog.instance.error('登录', '网页登录失败：${errorText(error)}');
       if (!mounted || _done) return;
       setState(() {
         _busy = false;
-        _hint = '$error';
+        _hint = '登录失败：${errorText(error)}';
       });
     }
   }
@@ -176,12 +182,20 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
     return Scaffold(
       backgroundColor: context.zero.canvas,
       appBar: AppBar(
-        title: Text('登录${widget.title}'),
+        title: Row(
+          children: [
+            BrandMark(source: widget.source, size: 22),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text('登录${widget.title}', overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: '刷新',
             onPressed: _busy ? null : () => _controller?.reload(),
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(AppIcons.refresh),
           ),
         ],
       ),
@@ -218,7 +232,7 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
             child: FilledButton(
               key: const Key('web-login-check'),
               onPressed: _busy ? null : _tryComplete,
-              child: Text(_busy ? '正在校验' : '我已完成登录'),
+              child: Text(_busy ? '正在确认' : '我已完成登录'),
             ),
           ),
         ],
@@ -232,14 +246,10 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.web_asset_off_outlined,
-            color: context.zero.muted,
-            size: 36,
-          ),
+          Icon(AppIcons.browserOff, color: context.zero.muted, size: 36),
           const SizedBox(height: 12),
           Text(
-            '当前环境没有可用的应用内浏览器。手机上会打开 $url 。这里可以改用二维码，让另一台设备扫描。',
+            '此设备暂不支持页面登录。请返回选择「扫码登录」，用另一台设备扫描。',
             key: const Key('web-login-unavailable'),
             textAlign: TextAlign.center,
             style: TextStyle(color: context.zero.muted, height: 1.4),

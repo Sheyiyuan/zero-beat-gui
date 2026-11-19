@@ -68,6 +68,8 @@ void validateGUIShortcuts(Map<String, String> overrides) {
     if (key == null) continue;
     final identity =
         '${key.trigger.keyId}:${key.control}:${key.alt}:${key.shift}:${key.meta}';
-    if (!used.add(identity)) throw const FormatException('快捷键重复，请先修改已有绑定');
+    if (!used.add(identity)) {
+      throw const FormatException('此快捷键已被使用，请换一个或先修改原设置。');
+    }
   }
 }

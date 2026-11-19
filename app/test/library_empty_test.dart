@@ -17,7 +17,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('empty-library')), findsOneWidget);
-    expect(find.text('曲库还是空的'), findsOneWidget);
+    expect(find.text('这里还没有歌曲'), findsOneWidget);
     expect(find.text('示例歌曲'), findsNothing);
   });
 }

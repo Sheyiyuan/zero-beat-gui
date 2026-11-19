@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_beat_gui/app/layout.dart';
+import 'package:zero_beat_gui/shared/playback.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 
 import 'support/fake_core.dart';
@@ -41,10 +42,61 @@ void main() {
     await tester.tap(find.text('我的'));
     await tester.pumpAndSettle();
 
-    expect(find.text('已连接'), findsOneWidget);
-    expect(find.text('哔哩哔哩：未登录，匿名访问部分内容受限'), findsOneWidget);
-    expect(find.text('网易云：未登录，可以匿名使用'), findsOneWidget);
-    expect(find.textContaining('核心 0.8.0'), findsOneWidget);
-    expect(find.text('本机：未登录，可以匿名使用'), findsNothing);
+    expect(find.text('与核心的连接已断开，正在自动重连'), findsNothing);
+    expect(find.text('哔哩哔哩 未登录 · 网易云 未登录'), findsOneWidget);
+    expect(find.text('版本信息'), findsOneWidget);
+    expect(find.textContaining('核心 0.8.0'), findsNothing);
+    expect(find.text('本机：未登录，仍可播放公开内容'), findsNothing);
   });
+
+  testWidgets(
+    'refreshing mine dismisses stale errors and keeps the player bar',
+    (tester) async {
+      const stale = '播放失败：无法打开音频';
+      final api = FakeCoreApi();
+      addTearDown(api.closeControllers);
+      await pumpApp(
+        tester,
+        api: api,
+        layout: AppLayout.mobile,
+        size: const Size(800, 900),
+      );
+      await tester.tap(find.text('我的'));
+      await tester.pumpAndSettle();
+
+      api.notify(stale);
+      api.emit(playerView(notice: stale));
+      await tester.pumpAndSettle();
+
+      expect(_onMine(stale), findsWidgets);
+      expect(find.text(stale), findsWidgets);
+
+      await tester.fling(
+        find.descendant(
+          of: find.byKey(const Key('mine-refresh')),
+          matching: find.byType(Scrollable),
+        ),
+        const Offset(0, 400),
+        1000,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(_onMine(stale), findsNothing);
+      expect(find.text(stale), findsOneWidget);
+
+      api.notify('同步已恢复');
+      api.emit(playerView(notice: '正在重试…'));
+      await tester.pumpAndSettle();
+
+      expect(_onMine('同步已恢复'), findsOneWidget);
+      expect(_onMine('正在重试…'), findsOneWidget);
+    },
+  );
 }
+
+Finder _onMine(String text) => find.descendant(
+  of: find.byKey(const Key('mine-refresh')),
+  matching: find.text(text),
+);

@@ -93,8 +93,16 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
   bool _autoGain = false;
   bool _loudnorm = false;
   String _loudnormNotice = '';
+  String _compNotice = '';
 
   String get loudnormNotice => _loudnormNotice;
+
+  /// Focus, loudnorm, then compensation, in that order.
+  String get playbackNotice {
+    if (focusNotice.isNotEmpty) return focusNotice;
+    if (_loudnormNotice.isNotEmpty) return _loudnormNotice;
+    return _compNotice;
+  }
 
   int get activeClipStartMs => _binding?.clipStartMs ?? 0;
 
@@ -121,7 +129,7 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
     try {
       player = _createPlayer();
     } catch (_) {
-      _markLoudnormUnavailable();
+      _loudnorm = false;
       return;
     }
     try {
@@ -131,7 +139,9 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
     } finally {
       await player.dispose();
     }
-    if (!_loudnorm) _markLoudnormUnavailable();
+    // A failed probe is a capability result, not a playback error. The notice
+    // is reserved for an actual filter application failure while auto-gain is
+    // enabled; otherwise Android would show a permanent warning on every load.
   }
 
   Future<void> close() async {
@@ -358,6 +368,10 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
 
   Future<void> _applyOutput(_Binding binding) async {
     final wantLoudnorm = _autoGain && _loudnorm;
+    if (!wantLoudnorm && _loudnormNotice.isNotEmpty) {
+      _loudnormNotice = '';
+      notifyListeners();
+    }
     var loudnormApplied = false;
     if (wantLoudnorm) {
       loudnormApplied = await binding.player.trySetFilter(kLoudnormFilter);
@@ -373,14 +387,33 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
     }
     final percent = _outputPercent(limiterApplied: limiterApplied);
     await binding.player.setVolume(percent);
+    _noteCompensation(limiterApplied);
+  }
+
+  void _noteCompensation(bool limiterApplied) {
+    final gain = _volume * math.pow(10, _compDb / 20);
+    final next = !limiterApplied && gain > 1
+        ? '音量补偿超过播放器上限，已放到最大音量'
+        : '';
+    if (next == _compNotice) return;
+    _compNotice = next;
+    notifyListeners();
   }
 
   double _outputPercent({required bool limiterApplied}) {
-    if (limiterApplied || _compDb == 0) {
-      return _volume.clamp(0, 1) * 100;
-    }
-    final gain = math.pow(10, _compDb / 20).toDouble();
-    return (_volume * gain).clamp(0, 1) * 100;
+    final linear = limiterApplied || _compDb == 0
+        ? _volume.clamp(0, 1).toDouble()
+        : (_volume * math.pow(10, _compDb / 20)).clamp(0, 1).toDouble();
+    return _mpvVolumeForLinear(linear);
+  }
+
+  /// mpv's softvol `volume` property is cubic: (percent / 100)^3 is the
+  /// amplitude. TUI applies a linear gain, so invert the curve here to make
+  /// the same percentage mean the same loudness on both clients.
+  double _mpvVolumeForLinear(double linear) {
+    final clamped = linear.clamp(0.0, 1.0).toDouble();
+    if (clamped <= 0) return 0;
+    return (math.pow(clamped, 1 / 3) * 100).clamp(0.0, 100.0).toDouble();
   }
 
   void _onTick() {
@@ -441,6 +474,9 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
 
   void _onError(_Binding binding, String message) {
     if (!_alive(binding) || binding.terminal || message.isEmpty) return;
+    // mpv logs this while rejecting the filter and does not keep the value.
+    // Compensation that fits stays on the volume property.
+    if (isUnsupportedAudioFilterError(message)) return;
     _fail(binding, message);
   }
 

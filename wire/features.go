@@ -34,6 +34,7 @@ type GUISettings struct {
 	CloseAction string            `json:"close_action"`
 	Shortcuts   map[string]string `json:"shortcuts"`
 	Window      string            `json:"window"`
+	Haptics     bool              `json:"haptics"`
 }
 
 func FromLoginQR(v source.QRCode) LoginQR { return LoginQR{v.Key, v.URL} }
@@ -49,10 +50,10 @@ func FromGUISettings(v session.GUISettings) GUISettings {
 	if v.Shortcuts == nil {
 		v.Shortcuts = map[string]string{}
 	}
-	return GUISettings{v.Theme, v.Palette, v.Accent, v.CloseAction, v.Shortcuts, v.Window}
+	return GUISettings{Theme: v.Theme, Palette: v.Palette, Accent: v.Accent, CloseAction: v.CloseAction, Shortcuts: v.Shortcuts, Window: v.Window, Haptics: v.Haptics}
 }
 func (v GUISettings) Core() session.GUISettings {
-	return session.GUISettings{Theme: v.Theme, Palette: v.Palette, Accent: v.Accent, CloseAction: v.CloseAction, Shortcuts: v.Shortcuts, Window: v.Window}
+	return session.GUISettings{Theme: v.Theme, Palette: v.Palette, Accent: v.Accent, CloseAction: v.CloseAction, Shortcuts: v.Shortcuts, Window: v.Window, Haptics: v.Haptics}
 }
 
 type DownloadTask struct {

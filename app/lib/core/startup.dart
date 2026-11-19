@@ -11,6 +11,7 @@ import '../app/zero_beat_app.dart';
 import '../platform/desktop_window.dart';
 import '../platform/window_frame.dart';
 import 'bootstrap.dart';
+import 'developer_log.dart';
 
 class CoreStartup extends StatefulWidget {
   const CoreStartup({super.key});
@@ -29,10 +30,19 @@ class _CoreStartupState extends State<CoreStartup> {
   }
 
   Future<StartedCore> _start() async {
-    if (!kIsWeb && (Platform.isLinux || Platform.isWindows)) {
-      await _installWindow();
+    final log = DeveloperLog.instance;
+    try {
+      if (!kIsWeb && (Platform.isLinux || Platform.isWindows)) {
+        await _installWindow();
+      }
+      log.info('启动', '正在连接播放服务');
+      final started = await CoreRuntime.instance.ensureStarted();
+      log.info('启动', '播放服务已就绪（${started.platform}）');
+      return started;
+    } catch (error) {
+      log.error('启动', '无法连接播放服务：$error');
+      rethrow;
     }
-    return CoreRuntime.instance.ensureStarted();
   }
 
   Future<void> _installWindow() async {
@@ -76,7 +86,7 @@ class _CoreStartupState extends State<CoreStartup> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '无法连接核心\n${snapshot.error}',
+                        '无法连接播放服务\n${snapshot.error}',
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -93,7 +103,7 @@ class _CoreStartupState extends State<CoreStartup> {
           theme: buildZeroTheme(),
           builder: (context, child) =>
               DesktopWindow.installed ? ZeroWindowFrame(child: child!) : child!,
-          home: const Scaffold(body: Center(child: Text('正在连接核心'))),
+          home: const Scaffold(body: Center(child: Text('正在连接播放服务'))),
         );
       },
     );

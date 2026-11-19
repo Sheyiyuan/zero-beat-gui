@@ -28,12 +28,40 @@ void main() {
     await tester.enterText(find.byType(TextField).first, '72');
     await tester.enterText(find.byType(TextField).last, '40');
     await tester.pump();
-    expect(find.text('终点必须大于起点。'), findsOneWidget);
+    expect(find.text('结束时间必须晚于开始时间。'), findsOneWidget);
     expect(
       tester
           .widget<FilledButton>(find.widgetWithText(FilledButton, '保存片段'))
           .onPressed,
       isNull,
+    );
+  });
+
+  testWidgets('clip editor can save when duration is not known yet', (
+    tester,
+  ) async {
+    final song = sampleSong(durationMs: 0);
+    final api = FeatureApi()..view = playerView(current: song, durationMs: 0);
+    addTearDown(api.closeControllers);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [coreApiProvider.overrideWithValue(api)],
+        child: MaterialApp(
+          home: Scaffold(body: ClipEditor(song: song)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    api.emit(playerView(current: song, durationMs: 0));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('clip-start')), '10');
+    await tester.enterText(find.byKey(const Key('clip-end')), '20');
+    await tester.pump();
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, '保存片段'))
+          .onPressed,
+      isNotNull,
     );
   });
 
