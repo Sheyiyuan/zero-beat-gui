@@ -2,7 +2,10 @@ module github.com/sheyiyuan/zero-beat-gui
 
 go 1.26.10
 
-require github.com/sheyiyuan/zero-beat-core v0.8.0
+require (
+	github.com/godbus/dbus/v5 v5.1.0
+	github.com/sheyiyuan/zero-beat-core v0.8.0
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -22,7 +25,6 @@ require (
 	github.com/go-git/go-git/v5 v5.16.3 // indirect
 	github.com/go-musicfox/netease-music v1.6.0 // indirect
 	github.com/go-musicfox/requests v0.2.3 // indirect
-	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
