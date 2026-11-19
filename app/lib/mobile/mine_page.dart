@@ -1,3 +1,4 @@
+import '../app/chrome.dart';
 import '../features/downloads_page.dart';
 import '../features/sync_page.dart';
 import '../features/navigation.dart';
@@ -25,30 +26,39 @@ class MinePage extends ConsumerWidget {
     final result = hello.result;
     final accounts = result?.accounts.entries.toList() ?? const [];
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       children: [
-        Text('我的', style: TextStyle(fontSize: 22, color: context.zero.text)),
-        SizedBox(height: 16),
-        ListTile(
-          title: const Text('下载管理'),
-          leading: const Icon(Icons.download_outlined),
-          onTap: () => openFeature(context, '下载管理', const DownloadsBody()),
+        const PageHeader(title: '我的', subtitle: '账号、下载、同步和这台设备上的偏好。'),
+        InsetGroup(
+          children: [
+            ListTile(
+              title: const Text('下载管理'),
+              leading: const Icon(Icons.download_outlined),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => openFeature(context, '下载管理', const DownloadsBody()),
+            ),
+            ListTile(
+              title: const Text('仓库同步'),
+              leading: const Icon(Icons.sync),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => openFeature(context, '仓库同步', const SyncBody()),
+            ),
+            ListTile(
+              title: const Text('账号与登录'),
+              subtitle: const Text('手机可在官方页面直接登录'),
+              leading: const Icon(Icons.account_circle_outlined),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => openFeature(context, '账号', const AccountsBody()),
+            ),
+            ListTile(
+              title: const Text('设置'),
+              leading: const Icon(Icons.settings_outlined),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => openFeature(context, '设置', const SettingsBody()),
+            ),
+          ],
         ),
-        ListTile(
-          title: const Text('仓库同步'),
-          leading: const Icon(Icons.sync),
-          onTap: () => openFeature(context, '仓库同步', const SyncBody()),
-        ),
-        ListTile(
-          title: const Text('账号与登录'),
-          leading: const Icon(Icons.qr_code),
-          onTap: () => openFeature(context, '账号', const AccountsBody()),
-        ),
-        ListTile(
-          title: const Text('设置'),
-          leading: const Icon(Icons.settings_outlined),
-          onTap: () => openFeature(context, '设置', const SettingsBody()),
-        ),
+        const SizedBox(height: 20),
         Text(connected ? '已连接' : '未连接', key: Key('connection-status')),
         SizedBox(height: 12),
         if (hello.error.isNotEmpty)

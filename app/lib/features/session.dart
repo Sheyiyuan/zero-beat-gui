@@ -516,6 +516,11 @@ class Transport {
     return setVolume(current + delta);
   }
 
+  Future<void> setPlaybackMode(String mode) {
+    _touch();
+    return _api.setMode(mode);
+  }
+
   Future<void> playPlaylistSong(
     Song song,
     String playlistId,

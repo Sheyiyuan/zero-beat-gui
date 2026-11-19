@@ -4,6 +4,22 @@ import 'package:zero_beat_core/zero_beat_core.dart';
 import '../app/theme.dart';
 import 'playback.dart';
 
+Widget _sourcePill(BuildContext context, Song song) {
+  return DecoratedBox(
+    decoration: BoxDecoration(
+      color: context.zero.accentSoft,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      child: Text(
+        sourceShortLabel(song.source),
+        style: TextStyle(fontSize: 11, color: context.zero.accent),
+      ),
+    ),
+  );
+}
+
 class SongTile extends StatelessWidget {
   const SongTile({
     required this.song,
@@ -75,19 +91,32 @@ class SongTile extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: context.zero.text,
-                                  fontSize: 14,
+                                  color: current
+                                      ? context.zero.accent
+                                      : context.zero.text,
+                                  fontSize: 15,
+                                  fontWeight: current
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${song.artist} · ${sourceLabel(song.source)} · ${formatClock(song.durationMs)}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: context.zero.muted,
-                                  fontSize: 12,
-                                ),
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    '${song.artist} · ${formatClock(song.durationMs)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: context.zero.muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  _sourcePill(context, song),
+                                ],
                               ),
                             ],
                           ),

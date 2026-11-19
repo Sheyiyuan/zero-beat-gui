@@ -59,34 +59,37 @@ class _MobileShellState extends State<MobileShell> {
             ],
           ),
         ),
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Divider(height: 1),
-            PlayerBar(
-              compact: true,
-              onOpen: _openPlayer,
-              onQueue: () => showQueueSheet(context),
-            ),
-            NavigationBar(
-              selectedIndex: _tab,
-              onDestinationSelected: (index) => setState(() => _tab = index),
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.library_music_outlined),
-                  label: '曲库',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.explore_outlined),
-                  label: '发现',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  label: '我的',
-                ),
-              ],
-            ),
-          ],
+        bottomNavigationBar: Material(
+          color: context.zero.surface,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(height: 1, thickness: 1, color: context.zero.line),
+              PlayerBar(
+                compact: true,
+                onOpen: _openPlayer,
+                onQueue: () => showQueueSheet(context),
+              ),
+              NavigationBar(
+                selectedIndex: _tab,
+                onDestinationSelected: (index) => setState(() => _tab = index),
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.library_music_outlined),
+                    label: '曲库',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.explore_outlined),
+                    label: '发现',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.person_outline),
+                    label: '我的',
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

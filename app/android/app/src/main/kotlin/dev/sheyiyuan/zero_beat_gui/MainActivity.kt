@@ -33,6 +33,7 @@ class MainActivity : AudioServiceActivity() {
 
     override fun configureFlutterEngine(engine: FlutterEngine) {
         super.configureFlutterEngine(engine)
+        WebLoginCookies.register(engine.dartExecutor.binaryMessenger)
         MethodChannel(engine.dartExecutor.binaryMessenger, "zero_beat/storage").setMethodCallHandler { call, result ->
             when (call.method) {
                 "pickDirectory" -> {

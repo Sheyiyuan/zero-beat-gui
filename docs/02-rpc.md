@@ -78,7 +78,7 @@ Dart 与 Go 在同一个进程里（Windows 为 `zero-core.exe` sidecar），但
 | 曲库读取 | `library.playlists`、`library.songs`（offset／limit，UI 每批 200） |
 | 歌单编辑 | `library.create`、`rename`、`delete`、`unlock`、`refresh`、`refs`、`refs.set`、`remote`、`import_remote` |
 | 搜索／链接 | `search.query`、`search.local`、`source.open_link`；保留来源警告、页数及内容类型 |
-| 账号 | `auth.accounts`、`auth.qr.start`、`poll`、`cancel`、`auth.logout`；二维码按来源和 key 隔离 |
+| 账号 | `auth.accounts`、`auth.qr.start`、`poll`、`cancel`、`auth.logout`、`auth.web.commit`；二维码按来源和 key 隔离。`auth.web.commit` 只接收官方页面已经设置的会话 cookie，核心用账号接口校验后再写入与扫码相同的账号存储。页面状态和日志不保留 cookie 值 |
 | 评论／相关推荐 | `content.comments`、`content.related`；只读，绑定进入页面时的曲目 |
 | 主页／电台 | `browse.roots`、`profiles`、`page`、`parse`；浏览引用与可播放曲目分开 |
 | 歌词 | `lyrics.get`、`candidates`、`preview`、`bind`、`unbind`、`offset` |

@@ -22,6 +22,8 @@ dependencies:
   zero_beat_rpc:
     path: ../packages/zero_beat_rpc
   qr_flutter: ^4.1.0
+  webview_flutter: ^4.13.0
+  webview_flutter_android: ^4.10.0
   tray_manager: ^0.5.3
   file_selector: ^1.1.0
   screen_retriever: ^0.2.2

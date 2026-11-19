@@ -21,6 +21,7 @@ class _Binding {
     required this.playbackId,
     required this.request,
     required this.playWhenReady,
+    required this.clipStartMs,
     required this.clipEndMs,
   });
 
@@ -32,7 +33,13 @@ class _Binding {
   bool ready = false;
   int intentVersion = 0;
   int? pendingSeek;
-  final int clipEndMs;
+
+  /// Original-timeline bounds from the engine.load that opened this binding.
+  /// open(end:) reads clipEndMs once. Later clip edits must not assign these
+  /// fields: position updates treat clipEndMs as the playback end and emit
+  /// ended when position reaches it.
+  int clipStartMs;
+  int clipEndMs;
   bool disposed = false;
   bool stopRequested = false;
   bool terminal = false;
@@ -88,6 +95,12 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
   String _loudnormNotice = '';
 
   String get loudnormNotice => _loudnormNotice;
+
+  int get activeClipStartMs => _binding?.clipStartMs ?? 0;
+
+  int get activeClipEndMs => _binding?.clipEndMs ?? 0;
+
+  String? get activePlaybackId => _binding?.playbackId;
 
   /// Optional sink for position, state, ended, and failed reports.
   void Function(HostEvent event)? onEvent;
@@ -163,9 +176,11 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
       playbackId: request.playbackId,
       request: request,
       playWhenReady: request.playWhenReady,
+      clipStartMs: request.stream.clipStartMs,
       clipEndMs: request.stream.clipEndMs,
     );
     _binding = binding;
+    notifyListeners();
     _volume = request.volume.clamp(0, 1).toDouble();
     _compDb = request.compDb;
     _autoGain = request.autoGain;
@@ -271,6 +286,8 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
         url: request.stream.url,
         headers: request.stream.headers,
         start: startMs > 0 ? Duration(milliseconds: startMs) : null,
+        // Same end [_onPosition] will use for this binding. Core replaces
+        // both by sending a new engine.load; this open is not rewritten.
         end: binding.clipEndMs > 0
             ? Duration(milliseconds: binding.clipEndMs)
             : null,
@@ -334,7 +351,7 @@ class PlaybackHost extends ChangeNotifier implements EngineHost {
 
   int _startMs(EngineLoad request) {
     var at = request.startAtMs;
-    final clipStart = request.stream.clipStartMs;
+    final clipStart = _binding?.clipStartMs ?? request.stream.clipStartMs;
     if (clipStart > 0 && at < clipStart) at = clipStart;
     return at;
   }

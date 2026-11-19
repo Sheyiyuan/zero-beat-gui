@@ -37,6 +37,11 @@ type Server struct {
 
 	gateMu sync.RWMutex
 	gate   chan struct{}
+
+	// loginMu serializes QR polling and same-device web commit. A poll that
+	// started earlier restores the previous cookie jar when it returns; web
+	// commit must run only after that restore, then install the new session.
+	loginMu sync.Mutex
 }
 
 func Serve(sess Session, engine *RemoteEngine, token string) (*Server, error) {

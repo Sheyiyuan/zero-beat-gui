@@ -46,6 +46,7 @@ func (c *clientConn) featureDispatch(ctx context.Context, method string, raw jso
 		ID          string              `json:"id"`
 		Source      string              `json:"source"`
 		Key         string              `json:"key"`
+		Cookies     map[string]string   `json:"cookies"`
 		Page        int                 `json:"page"`
 		Ref         wire.TrackRef       `json:"ref"`
 		BrowseRef   wire.BrowseRef      `json:"browse_ref"`
@@ -179,12 +180,20 @@ func (c *clientConn) featureDispatch(ctx context.Context, method string, raw jso
 			v, err := f.StartLogin(ctx, p.Source)
 			return wire.FromLoginQR(v), err
 		case "auth.qr.poll":
-			v, err := f.PollLogin(ctx, p.Source, p.Key)
-			return wire.FromLoginPoll(v), err
+			return c.withLogin(func() (any, error) {
+				v, err := f.PollLogin(ctx, p.Source, p.Key)
+				return wire.FromLoginPoll(v), err
+			})
 		case "auth.qr.cancel":
 			return empty(f.CancelLogin(ctx, p.Source, p.Key))
+		case "auth.web.commit":
+			return c.withLogin(func() (any, error) {
+				return c.commitWebLogin(ctx, f, p.Source, p.Cookies)
+			})
 		case "auth.logout":
-			return empty(f.Logout(ctx, p.Source))
+			return c.withLogin(func() (any, error) {
+				return empty(f.Logout(ctx, p.Source))
+			})
 		case "content.comments", "content.related", "browse.profiles":
 			ref, err := p.Ref.Core()
 			if err != nil {
