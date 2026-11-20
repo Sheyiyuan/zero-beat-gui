@@ -903,7 +903,7 @@ class NowPlayingBody extends ConsumerWidget {
                       icon: const Icon(AppIcons.next),
                     ),
                     Flexible(
-                      child: _ModeButton(
+                      child: PlaybackModeButton(
                         mode: view.snapshot.mode.value,
                         compact: compactMode,
                       ),
@@ -1027,8 +1027,12 @@ class _NowPlayingTitleState extends State<_NowPlayingTitle> {
   }
 }
 
-class _ModeButton extends ConsumerWidget {
-  const _ModeButton({required this.mode, this.compact = false});
+class PlaybackModeButton extends ConsumerWidget {
+  const PlaybackModeButton({
+    required this.mode,
+    this.compact = false,
+    super.key,
+  });
   final String mode;
   final bool compact;
 

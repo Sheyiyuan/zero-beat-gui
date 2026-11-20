@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_gui/app/layout.dart';
 import 'package:zero_beat_gui/features/session.dart';
-import 'package:zero_beat_gui/shared/library_pane.dart';
+import 'package:zero_beat_gui/desktop/desktop_library.dart';
 import 'package:zero_beat_gui/shared/playback.dart';
 import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 
@@ -332,48 +332,50 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('library pane refresh keeps song selection and scroll offset', (
-    tester,
-  ) async {
-    final api = FeatureApi()
-      ..libraryPlaylists = [samplePlaylist(id: 'list-1', title: '本地歌单')]
-      ..librarySongs = [
-        for (var i = 0; i < 30; i++) sampleSong(id: 'song-$i', title: '歌曲 $i'),
-      ];
-    addTearDown(api.closeControllers);
-    await pumpApp(
-      tester,
-      api: api,
-      layout: AppLayout.desktop,
-      size: const Size(1280, 900),
-    );
+  testWidgets(
+    'desktop library refresh keeps song selection and scroll offset',
+    (tester) async {
+      final api = FeatureApi()
+        ..libraryPlaylists = [samplePlaylist(id: 'list-1', title: '本地歌单')]
+        ..librarySongs = [
+          for (var i = 0; i < 30; i++)
+            sampleSong(id: 'song-$i', title: '歌曲 $i'),
+        ];
+      addTearDown(api.closeControllers);
+      await pumpApp(
+        tester,
+        api: api,
+        layout: AppLayout.desktop,
+        size: const Size(1280, 900),
+      );
 
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(MaterialApp)),
-      listen: false,
-    );
-    final list = find.descendant(
-      of: find.byType(LibraryPane),
-      matching: find.byType(ListView),
-    );
-    expect(find.byKey(const Key('library-pane-refresh')), findsOneWidget);
-    await tester.drag(list, const Offset(0, -300));
-    await tester.pumpAndSettle();
-    final offset = _scrollOffset(tester, list);
-    expect(offset, greaterThan(0));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+        listen: false,
+      );
+      final list = find.descendant(
+        of: find.byType(DesktopLibraryView),
+        matching: find.byType(CustomScrollView),
+      );
+      expect(find.byKey(const Key('library-refresh-pane')), findsOneWidget);
+      await tester.drag(list, const Offset(0, -300));
+      await tester.pumpAndSettle();
+      final offset = _scrollOffset(tester, list);
+      expect(offset, greaterThan(0));
 
-    container.read(libraryProvider.notifier).selectSong('song-5');
-    await tester.pump();
-    final selected = container.read(libraryProvider).selectedSongId;
-    expect(selected, 'song-5');
+      container.read(libraryProvider.notifier).selectSong('song-5');
+      await tester.pump();
+      final selected = container.read(libraryProvider).selectedSongId;
+      expect(selected, 'song-5');
 
-    await container.read(libraryProvider.notifier).refresh();
-    await tester.pumpAndSettle();
+      await container.read(libraryProvider.notifier).refresh();
+      await tester.pumpAndSettle();
 
-    expect(container.read(libraryProvider).selectedSongId, selected);
-    expect(_scrollOffset(tester, list), closeTo(offset, 0.5));
-    expect(tester.takeException(), isNull);
-  });
+      expect(container.read(libraryProvider).selectedSongId, selected);
+      expect(_scrollOffset(tester, list), closeTo(offset, 0.5));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('long press song menu disappears when the route is popped', (
     tester,

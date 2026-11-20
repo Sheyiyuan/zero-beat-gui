@@ -32,19 +32,7 @@ class _SearchBoxState extends ConsumerState<SearchBox> {
     super.dispose();
   }
 
-  Future<void> _openLink(String value) async {
-    final api = ref.read(coreApiProvider);
-    await perform(context, () async {
-      final link = await api.openLink(value.trim());
-      if (!mounted) return;
-      if (link.matched && link.kind == 'browse') {
-        final target = await api.parseBrowse(value);
-        if (mounted) await openFeature(context, '浏览', BrowseBody(ref: target));
-      } else {
-        await ref.read(searchProvider.notifier).openLink(value, resolved: link);
-      }
-    });
-  }
+  Future<void> _openLink(String value) => openSearchLink(context, ref, value);
 
   @override
   Widget build(BuildContext context) {
@@ -86,34 +74,7 @@ class _SearchBoxState extends ConsumerState<SearchBox> {
         SizedBox(height: 10),
         Row(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  spacing: 8,
-                  children: [
-                    _SourceChip(
-                      label: '全部',
-                      value: '',
-                      selected: search.source,
-                      onSelected: notifier.setSource,
-                    ),
-                    _SourceChip(
-                      label: '哔哩哔哩',
-                      value: 'bilibili',
-                      selected: search.source,
-                      onSelected: notifier.setSource,
-                    ),
-                    _SourceChip(
-                      label: '网易云',
-                      value: 'netease',
-                      selected: search.source,
-                      onSelected: notifier.setSource,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const Expanded(child: SearchSourceChips()),
             IconButton(
               key: const Key('link-toggle'),
               tooltip: _showLink ? '收起链接' : '打开链接',
@@ -156,6 +117,58 @@ class _SearchBoxState extends ConsumerState<SearchBox> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Opens a pasted song, playlist, or profile link. Browse links get their own
+/// page; everything else resolves through the search state.
+Future<void> openSearchLink(
+  BuildContext context,
+  WidgetRef ref,
+  String value,
+) async {
+  final api = ref.read(coreApiProvider);
+  await perform(context, () async {
+    final link = await api.openLink(value.trim());
+    if (!context.mounted) return;
+    if (link.matched && link.kind == 'browse') {
+      final target = await api.parseBrowse(value);
+      if (context.mounted) {
+        await openFeature(context, '浏览', BrowseBody(ref: target));
+      }
+    } else {
+      await ref.read(searchProvider.notifier).openLink(value, resolved: link);
+    }
+  });
+}
+
+/// Search source filter. Changing it reruns a submitted search.
+class SearchSourceChips extends ConsumerWidget {
+  const SearchSourceChips({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final source = ref.watch(searchProvider.select((s) => s.source));
+    final notifier = ref.read(searchProvider.notifier);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        spacing: 8,
+        children: [
+          for (final (label, value) in const [
+            ('全部', ''),
+            ('哔哩哔哩', 'bilibili'),
+            ('网易云', 'netease'),
+          ])
+            _SourceChip(
+              label: label,
+              value: value,
+              selected: source,
+              onSelected: notifier.setSource,
+            ),
+        ],
+      ),
     );
   }
 }

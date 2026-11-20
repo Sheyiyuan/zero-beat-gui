@@ -95,7 +95,8 @@ void main() {
     expect(api.saves, isNotEmpty);
     expect(api.saves.last.haptics, isFalse);
 
-    await tester.pageBack();
+    // Desktop settings is a sidebar destination, not a pushed page.
+    await tester.tap(find.byKey(const Key('desktop-nav-library')));
     await tester.pumpAndSettle();
     ticks = 0;
     await tester.tap(find.byKey(const Key('play-pause')));
@@ -108,7 +109,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.preferences.haptics, isTrue);
 
-    await tester.pageBack();
+    await tester.tap(find.byKey(const Key('desktop-nav-library')));
     await tester.pumpAndSettle();
     ticks = 0;
     await tester.tap(find.byKey(const Key('play-pause')));

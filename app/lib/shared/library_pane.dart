@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zero_beat_core/zero_beat_core.dart';
-import 'package:zero_beat_rpc/zero_beat_rpc.dart';
-import '../app/providers.dart';
 import '../app/theme.dart';
 import '../features/session.dart';
 import '../features/song_actions.dart';
 import '../features/library_actions.dart';
 import '../features/navigation.dart';
+import '../features/playlist_selection.dart';
 import 'song_tile.dart';
 
 class LibraryPane extends ConsumerStatefulWidget {
@@ -23,118 +21,12 @@ class LibraryPane extends ConsumerStatefulWidget {
   ConsumerState<LibraryPane> createState() => _LibraryPaneState();
 }
 
-class _LibraryPaneState extends ConsumerState<LibraryPane> {
-  final selected = <String>{};
-  final _removedSongIds = <String>{};
-  String? target;
-  bool all = false;
-  bool selecting = false;
-  bool busy = false;
-  void _toggle(Song song) => setState(() {
-    selecting = true;
-    all = false;
-    if (!selected.add(song.id)) selected.remove(song.id);
-  });
-  Future<void> _batch(String action) async {
-    final library = ref.read(libraryProvider);
-    final batchTarget = library.selectedPlaylistId;
-    final songs = library.songs.where((s) => selected.contains(s.id)).toList();
-    final playlist = all ? library.selectedPlaylistId ?? '' : '';
-    final api = ref.read(coreApiProvider);
-    setState(() => busy = true);
-    await perform(context, () async {
-      if (action == 'download') {
-        final result = await api.downloadSelection(
-          songs: songs,
-          playlistId: playlist,
-        );
-        if (mounted) {
-          showBatchResult(context, result);
-          _keepFailures(result, batchTarget);
-        }
-        return;
-      }
-      if (action == 'add') {
-        final result = await addSongs(
-          context,
-          api,
-          songs,
-          playlistId: playlist,
-        );
-        if (mounted && result != null) _keepFailures(result, batchTarget);
-        return;
-      }
-      if (action == 'remove' &&
-          !await confirmAction(
-            context,
-            '移除选中曲目',
-            '歌曲将从当前歌单移除；若为混合歌单，这些歌曲以后也会隐藏。音频文件和来源歌单保留。',
-          )) {
-        return;
-      }
-      if (action == 'play') {
-        ref.read(interruptionPolicyProvider).noteUserTransport();
-      }
-      final result = await api.batch(
-        action,
-        playlistId: playlist,
-        songs: songs,
-        target: action == 'play' ? '' : library.selectedPlaylistId ?? '',
-      );
-      if (!mounted) return;
-      showBatchResult(context, result);
-      _keepFailures(result, batchTarget);
-    });
-    if (mounted) setState(() => busy = false);
-  }
-
-  void _keepFailures(BatchResult result, String? batchTarget) {
-    if (ref.read(libraryProvider).selectedPlaylistId != batchTarget) return;
-    setState(() {
-      all = false;
-      selected.clear();
-      selected.addAll(result.failed.map((f) => f.songId));
-      selecting = selected.isNotEmpty;
-    });
-  }
-
-  Future<void> _play(Song song, LibraryState library) => perform(
-    context,
-    () => ref
-        .read(transportProvider)
-        .playPlaylistSong(song, library.selectedPlaylistId!, library.songs),
-  );
-
-  Future<void> _removeSong(Song song) async {
-    final playlistId = ref.read(libraryProvider).selectedPlaylistId;
-    if (playlistId == null) return;
-    setState(() => _removedSongIds.add(song.id));
-    final api = ref.read(coreApiProvider);
-    var removed = false;
-    await perform(context, () async {
-      final result = await api.batch(
-        'remove',
-        playlistId: playlistId,
-        songs: [song],
-      );
-      removed = !result.failed.any((failure) => failure.songId == song.id);
-      if (mounted) showBatchResult(context, result);
-    });
-    if (!removed && mounted) {
-      setState(() => _removedSongIds.remove(song.id));
-    }
-  }
-
+class _LibraryPaneState extends ConsumerState<LibraryPane>
+    with PlaylistSelection {
   @override
   Widget build(BuildContext context) {
     final library = ref.watch(libraryProvider);
-    if (target != library.selectedPlaylistId) {
-      target = library.selectedPlaylistId;
-      selected.clear();
-      _removedSongIds.clear();
-      all = false;
-      selecting = false;
-    }
+    syncSelectionTarget(library);
     if (library.loading && !library.loaded) {
       return const Center(child: Text('正在读取曲库'));
     }
@@ -161,11 +53,7 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
     final playlist = library.playlists
         .where((item) => item.id == library.selectedPlaylistId)
         .firstOrNull;
-    final songs = _removedSongIds.isEmpty
-        ? library.songs
-        : library.songs
-              .where((song) => !_removedSongIds.contains(song.id))
-              .toList();
+    final songs = visibleSongs(library);
     return LayoutBuilder(
       builder: (context, constraints) {
         // Very short desktops (or large text scales) cannot fit a two-line
@@ -190,13 +78,7 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                     style: TextStyle(color: context.zero.muted, fontSize: 13),
                   ),
                   TextButton(
-                    onPressed: busy
-                        ? null
-                        : () => setState(() {
-                            selecting = !selecting;
-                            selected.clear();
-                            all = false;
-                          }),
+                    onPressed: busy ? null : toggleSelecting,
                     child: Text(selecting ? '取消多选' : '多选'),
                   ),
                   if (selecting) ...[
@@ -206,20 +88,17 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                           : '已选 ${selected.length} 首',
                     ),
                     TextButton(
-                      onPressed: () => setState(() {
-                        all = false;
-                        selected.addAll(library.songs.map((s) => s.id));
-                      }),
+                      onPressed: () => selectLoaded(library),
                       child: const Text('全选已加载歌曲'),
                     ),
                     TextButton(
-                      onPressed: () => setState(() => all = true),
+                      onPressed: selectAll,
                       child: Text('选择全部 ${library.total} 首'),
                     ),
                     PopupMenuButton<String>(
                       tooltip: '批量操作',
-                      enabled: !busy && (all || selected.isNotEmpty),
-                      onSelected: _batch,
+                      enabled: !busy && hasSelection,
+                      onSelected: runBatch,
                       itemBuilder: (_) => const [
                         PopupMenuItem(value: 'play', child: Text('播放')),
                         PopupMenuItem(value: 'download', child: Text('下载')),
@@ -308,7 +187,7 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                             '从歌单移除「${song.title}」',
                             '只从当前歌单移除，不会删除音频文件。',
                           ),
-                          onDismissed: (_) => _removeSong(song),
+                          onDismissed: (_) => removeSong(song),
                           background: Container(
                             color: context.zero.danger,
                             alignment: Alignment.centerRight,
@@ -333,7 +212,9 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                               if (selecting)
                                 Checkbox(
                                   value: all || selected.contains(song.id),
-                                  onChanged: busy ? null : (_) => _toggle(song),
+                                  onChanged: busy
+                                      ? null
+                                      : (_) => toggleSong(song),
                                 ),
                               Expanded(
                                 child: SongTile(
@@ -354,7 +235,7 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                                         icon: AppIcons.select,
                                       ),
                                     ],
-                                    onExtra: (_) => _toggle(song),
+                                    onExtra: (_) => toggleSong(song),
                                   ),
                                   onSecondaryTap: (position) => showSongMenu(
                                     context,
@@ -368,13 +249,13 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                                         icon: AppIcons.select,
                                       ),
                                     ],
-                                    onExtra: (_) => _toggle(song),
+                                    onExtra: (_) => toggleSong(song),
                                   ),
                                   onTap: () {
                                     if (selecting) {
-                                      _toggle(song);
+                                      toggleSong(song);
                                     } else if (widget.tapToPlay) {
-                                      _play(song, library);
+                                      playFromPlaylist(song);
                                     } else {
                                       ref
                                           .read(libraryProvider.notifier)
@@ -383,7 +264,7 @@ class _LibraryPaneState extends ConsumerState<LibraryPane> {
                                   },
                                   onPlay: widget.tapToPlay
                                       ? null
-                                      : () => _play(song, library),
+                                      : () => playFromPlaylist(song),
                                   trailing: SongActions(song: song),
                                 ),
                               ),

@@ -11,7 +11,7 @@ import 'package:zero_beat_rpc/zero_beat_rpc.dart';
 import 'package:zero_beat_gui/app/layout.dart';
 import 'package:zero_beat_gui/features/settings_page.dart';
 import 'package:zero_beat_gui/platform/desktop_window.dart';
-import 'package:zero_beat_gui/shared/song_tile.dart';
+import 'package:zero_beat_gui/desktop/desktop_library.dart';
 import 'support/fake_core.dart';
 import 'support/pump_app.dart';
 import 'support/samples.dart';
@@ -182,9 +182,12 @@ void main() {
       ..librarySongs = [sampleSong()];
     addTearDown(api.closeControllers);
     await pumpApp(tester, api: api, layout: AppLayout.desktop);
+    // The row's play button appears once the track is selected or hovered.
+    await tester.tap(find.byKey(const ValueKey('title-song-1')));
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(
       find.descendant(
-        of: find.byType(SongTile),
+        of: find.byType(DesktopTrackRow),
         matching: find.byTooltip('播放'),
       ),
     );
@@ -296,8 +299,12 @@ void main() {
       expect(find.text('我的'), findsNothing);
       await tester.tap(find.byTooltip('展开曲库'));
       await tester.pumpAndSettle();
-      expect(find.text('窄窗歌单'), findsOneWidget);
-      await tester.tap(find.text('窄窗歌单'));
+      final inDrawer = find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('窄窗歌单'),
+      );
+      expect(inDrawer, findsOneWidget);
+      await tester.tap(inDrawer);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },

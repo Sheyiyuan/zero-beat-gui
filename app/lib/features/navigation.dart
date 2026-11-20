@@ -5,16 +5,25 @@ import '../shared/playback.dart';
 import '../shared/queue_panel.dart';
 import '../mobile/full_player_page.dart';
 
+typedef FeaturePageBuilder =
+    Widget Function(BuildContext context, String title, Widget body);
+
 class FeatureNavigation extends InheritedWidget {
   const FeatureNavigation({
     required this.navigatorKey,
     required super.child,
+    this.pageBuilder,
     super.key,
   });
   final GlobalKey<NavigatorState> navigatorKey;
+
+  /// Page chrome around a feature body. Without one, features open as a plain
+  /// app-bar page.
+  final FeaturePageBuilder? pageBuilder;
   @override
   bool updateShouldNotify(FeatureNavigation oldWidget) =>
-      navigatorKey != oldWidget.navigatorKey;
+      navigatorKey != oldWidget.navigatorKey ||
+      pageBuilder != oldWidget.pageBuilder;
 }
 
 Future<T?> openFeature<T>(BuildContext context, String title, Widget body) {
@@ -25,6 +34,14 @@ Future<T?> openFeature<T>(BuildContext context, String title, Widget body) {
     final scaffold = Scaffold.maybeOf(hostContext);
     if (scaffold?.isDrawerOpen == true) scaffold!.closeDrawer();
     if (scaffold?.isEndDrawerOpen == true) scaffold!.closeEndDrawer();
+  }
+  final pageBuilder = host?.pageBuilder;
+  if (pageBuilder != null) {
+    return navigator.push<T>(
+      MaterialPageRoute(
+        builder: (context) => pageBuilder(context, title, body),
+      ),
+    );
   }
   return navigator.push<T>(
     MaterialPageRoute(

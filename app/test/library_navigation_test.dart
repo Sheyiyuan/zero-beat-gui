@@ -115,7 +115,7 @@ void main() {
       addTearDown(api.closeControllers);
       await pumpApp(tester, api: api, layout: AppLayout.desktop);
       await tester.enterText(find.byKey(const Key('search-field')), 'music');
-      await tester.tap(find.text('搜索').last);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('search-next')), findsOneWidget);
       api.pendingSearch = Completer<SearchView>();

@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_beat_core/zero_beat_core.dart';
 import 'package:zero_beat_gui/app/icons.dart';
 import 'package:zero_beat_gui/app/layout.dart';
+import 'package:zero_beat_gui/desktop/desktop_now_playing.dart';
+import 'package:zero_beat_gui/desktop/desktop_player_bar.dart';
 import 'package:zero_beat_gui/shared/playback.dart';
 import 'package:zero_beat_gui/shared/player_bar.dart';
 import 'package:zero_beat_gui/shared/progress_ring.dart';
@@ -165,7 +167,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('desktop overlay has no ring but the desktop bar does', (
+  testWidgets('desktop now playing leaves transport in the docked bar', (
     tester,
   ) async {
     final song = sampleSong();
@@ -187,25 +189,28 @@ void main() {
     );
     await openFullPlayer(tester);
 
-    final body = find.byType(NowPlayingBody);
+    final view = find.byType(DesktopNowPlaying);
+    expect(view, findsOneWidget);
     expect(
-      find.descendant(
-        of: body,
-        matching: find.byKey(const Key('play-progress-ring')),
-      ),
+      find.descendant(of: view, matching: find.byKey(const Key('play-pause'))),
       findsNothing,
     );
-    final ringFinder = find.descendant(
-      of: find.byType(PlayerBar),
-      matching: find.byKey(const Key('play-progress-ring')),
-    );
-    expect(ringFinder, findsOneWidget);
-    expect(
-      tester.widget<PlayProgressRing>(ringFinder).progress,
-      closeTo(0.25, 0.0001),
-    );
-    expect(find.byKey(const Key('now-playing-restart')), findsOneWidget);
-    await expectNowPlayingControlOrder(tester);
+    final bar = find.byType(DesktopPlayerBar);
+    double x(Finder finder) =>
+        tester.getCenter(find.descendant(of: bar, matching: finder)).dx;
+    final restart = x(find.byKey(const Key('player-bar-restart')));
+    final previous = x(find.byTooltip('上一首'));
+    final play = x(find.byKey(const Key('play-pause')));
+    final next = x(find.byTooltip('下一首'));
+    final mode = x(find.byKey(const Key('playback-mode')));
+    expect(restart, lessThan(previous));
+    expect(previous, lessThan(play));
+    expect(play, lessThan(next));
+    expect(next, lessThan(mode));
+
+    await tester.tap(find.byKey(const Key('now-playing-close')));
+    await tester.pumpAndSettle();
+    expect(find.byType(DesktopNowPlaying), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

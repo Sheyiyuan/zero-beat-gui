@@ -1,26 +1,30 @@
-import 'key_bindings.dart';
-import '../features/downloads_page.dart';
-import '../features/sync_page.dart';
-import '../features/navigation.dart';
-import '../features/library_actions.dart';
-import '../features/accounts_page.dart';
-import '../features/content_pages.dart';
-import '../features/settings_page.dart';
 import 'package:flutter/material.dart';
-import '../app/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../app/icons.dart';
 import '../app/providers.dart';
-import '../app/theme.dart';
+import '../features/accounts_page.dart';
+import '../features/content_pages.dart';
+import '../features/downloads_page.dart';
+import '../features/navigation.dart';
 import '../features/session.dart';
+import '../features/settings_page.dart';
+import '../features/sync_page.dart';
 import '../platform/desktop_mode.dart';
 import '../shared/cover_art.dart';
-import '../shared/library_pane.dart';
 import '../shared/playback.dart';
 import '../shared/player_bar.dart';
 import '../shared/queue_panel.dart';
-import '../shared/search_box.dart';
 import '../shared/seek_bar.dart';
+import '../app/theme.dart';
+import 'desktop_library.dart';
+import 'desktop_now_playing.dart';
+import 'desktop_pages.dart';
+import 'desktop_player_bar.dart';
+import 'desktop_sections.dart';
+import 'desktop_sidebar.dart';
+import 'desktop_top_bar.dart';
+import 'key_bindings.dart';
 
 class ToggleIntent extends Intent {
   const ToggleIntent();
@@ -81,6 +85,13 @@ class _GuardedAction extends Action<Intent> {
   }
 }
 
+/// Windows narrower than this collapse the sidebar into an icon rail.
+const _railBelow = 960.0;
+
+/// Windows at least this wide dock the queue beside the main column instead of
+/// sliding it over as a drawer.
+const _dockQueueFrom = 1280.0;
+
 class DesktopShell extends ConsumerStatefulWidget {
   const DesktopShell({super.key});
 
@@ -90,9 +101,11 @@ class DesktopShell extends ConsumerStatefulWidget {
 
 class _DesktopShellState extends ConsumerState<DesktopShell> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final _scope = FocusNode(debugLabel: 'desktop-scope');
-  bool _nowPlaying = false;
   final _navigatorKey = GlobalKey<NavigatorState>();
+  final _scope = FocusNode(debugLabel: 'desktop-scope');
+  final _section = ValueNotifier(DesktopSection.library);
+  bool _nowPlaying = false;
+  bool _queueDocked = false;
   late final _dismissNowPlaying = _DismissNowPlayingObserver(() {
     if (mounted && _nowPlaying) setState(() => _nowPlaying = false);
   });
@@ -137,7 +150,35 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   @override
   void dispose() {
     _scope.dispose();
+    _section.dispose();
     super.dispose();
+  }
+
+  void _go(DesktopSection section) {
+    final scaffold = _scaffoldKey.currentState;
+    if (scaffold?.isDrawerOpen ?? false) scaffold!.closeDrawer();
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    setState(() {
+      _nowPlaying = false;
+      _section.value = section;
+    });
+  }
+
+  void _openPlaylist(String id) {
+    ref.read(searchProvider.notifier).clearResults();
+    final library = ref.read(libraryProvider);
+    if (library.selectedPlaylistId != id || !library.loaded) {
+      ref.read(libraryProvider.notifier).selectPlaylist(id);
+    }
+    _go(DesktopSection.library);
+  }
+
+  void _toggleQueue() {
+    if (MediaQuery.sizeOf(context).width >= _dockQueueFrom) {
+      setState(() => _queueDocked = !_queueDocked);
+    } else {
+      _scaffoldKey.currentState?.openEndDrawer();
+    }
   }
 
   void _closeOverlay() {
@@ -145,8 +186,13 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
       setState(() => _nowPlaying = false);
       return;
     }
-    if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
-      Navigator.of(context).pop();
+    final scaffold = _scaffoldKey.currentState;
+    if (scaffold?.isEndDrawerOpen ?? false) {
+      scaffold!.closeEndDrawer();
+      return;
+    }
+    if (scaffold?.isDrawerOpen ?? false) {
+      scaffold!.closeDrawer();
       return;
     }
     _navigatorKey.currentState?.maybePop();
@@ -155,7 +201,9 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   Future<void> _playSelected() async {
     final search = ref.read(searchProvider);
     final transport = ref.read(transportProvider);
-    if (search.submitted && search.error.isEmpty) {
+    if (_section.value == DesktopSection.discover &&
+        search.submitted &&
+        search.error.isEmpty) {
       final song = search.selectedSong;
       if (song != null) {
         final songs = [
@@ -198,12 +246,9 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
             () => perform(context, transport.toggle),
             enabled: connected,
           ),
-          SearchIntent: _GuardedAction(() {
-            _navigatorKey.currentState?.popUntil((r) => r.isFirst);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) ref.read(searchFocusProvider).requestFocus();
-            });
-          }),
+          SearchIntent: _GuardedAction(
+            () => ref.read(searchFocusProvider).requestFocus(),
+          ),
           PreviousIntent: _GuardedAction(
             () => perform(context, transport.previous),
             enabled: connected,
@@ -233,25 +278,164 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
             valueListenable: DesktopMode.mini,
             builder: (context, mini, _) {
               if (mini) return const _MiniPlayer();
-              return _DesktopFrame(
-                scaffoldKey: _scaffoldKey,
-                navigatorKey: _navigatorKey,
-                observers: [_dismissNowPlaying],
-                nowPlaying: _nowPlaying,
-                onOpenNowPlaying: () =>
-                    setState(() => _nowPlaying = !_nowPlaying),
-                onCloseNowPlaying: () => setState(() => _nowPlaying = false),
-              );
+              return _frame(context);
             },
           ),
         ),
       ),
     );
   }
+
+  Widget _frame(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final rail = width < _railBelow;
+    final dockQueue = _queueDocked && width >= _dockQueueFrom;
+    final section = _section.value;
+    Widget sidebar() => DesktopSidebar(
+      section: section,
+      onSection: _go,
+      onPlaylist: _openPlaylist,
+    );
+    return FeatureNavigation(
+      navigatorKey: _navigatorKey,
+      pageBuilder: (context, title, body) =>
+          DesktopFeaturePage(title: title, body: body),
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: context.zero.canvas,
+        drawer: rail ? Drawer(width: 280, child: sidebar()) : null,
+        endDrawer: Drawer(
+          width: 380,
+          backgroundColor: context.zero.surface,
+          child: const SafeArea(child: QueuePanel()),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (rail)
+                    DesktopRail(
+                      section: section,
+                      onSection: _go,
+                      onExpand: () => _scaffoldKey.currentState?.openDrawer(),
+                    )
+                  else
+                    SizedBox(width: 240, child: sidebar()),
+                  VerticalDivider(
+                    width: 1,
+                    color: context.zero.line.withValues(alpha: 0.6),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Column(
+                          children: [
+                            DesktopTopBar(
+                              onSearch: () => _go(DesktopSection.discover),
+                            ),
+                            Expanded(child: _navigator()),
+                          ],
+                        ),
+                        Positioned.fill(
+                          child: AnimatedSwitcher(
+                            duration: MediaQuery.disableAnimationsOf(context)
+                                ? Duration.zero
+                                : const Duration(milliseconds: 220),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween(
+                                      begin: const Offset(0, 0.04),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                ),
+                            child: _nowPlaying
+                                ? DesktopNowPlaying(
+                                    key: const Key('desktop-now-playing'),
+                                    onClose: () =>
+                                        setState(() => _nowPlaying = false),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (dockQueue) ...[
+                    VerticalDivider(
+                      width: 1,
+                      color: context.zero.line.withValues(alpha: 0.6),
+                    ),
+                    SizedBox(
+                      width: 340,
+                      child: Material(
+                        color: context.zero.surface,
+                        child: const QueuePanel(key: Key('docked-queue')),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            DesktopPlayerBar(
+              nowPlaying: _nowPlaying,
+              queueOpen: dockQueue,
+              onNowPlaying: () => setState(() => _nowPlaying = !_nowPlaying),
+              onQueue: _toggleQueue,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _navigator() => Navigator(
+    key: _navigatorKey,
+    observers: [_dismissNowPlaying],
+    onGenerateRoute: (_) => MaterialPageRoute(
+      builder: (context) => ValueListenableBuilder<DesktopSection>(
+        valueListenable: _section,
+        builder: (context, section, _) => Material(
+          color: context.zero.canvas,
+          child: switch (section) {
+            DesktopSection.library => const DesktopLibraryView(),
+            DesktopSection.discover => const DesktopDiscoverPage(),
+            DesktopSection.downloads => const DesktopSectionPage(
+              title: '下载管理',
+              subtitle: '下载任务、失败原因与已下载的内容',
+              body: DownloadsBody(),
+            ),
+            DesktopSection.sync => const DesktopSectionPage(
+              title: '曲库同步',
+              subtitle: '歌单与注释的跨设备同步、冲突处理',
+              body: SyncBody(),
+            ),
+            DesktopSection.accounts => const DesktopSectionPage(
+              title: '账号与登录',
+              subtitle: '平台账号状态；未登录也可以播放公开内容',
+              body: AccountsBody(),
+            ),
+            DesktopSection.settings => const DesktopSectionPage(
+              title: '设置',
+              subtitle: '播放、外观、快捷键与窗口行为',
+              body: SettingsBody(),
+            ),
+          },
+        ),
+      ),
+    ),
+  );
 }
 
-/// The desktop now-playing overlay lives above the nested feature navigator.
-/// A feature opened from it would otherwise be hidden behind the overlay.
+/// The now-playing view lives above the nested feature navigator. A feature
+/// opened from it would otherwise be hidden behind the view.
 class _DismissNowPlayingObserver extends NavigatorObserver {
   _DismissNowPlayingObserver(this.onPush);
 
@@ -260,244 +444,6 @@ class _DismissNowPlayingObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     if (previousRoute != null) onPush();
-  }
-}
-
-class _DesktopFrame extends ConsumerWidget {
-  const _DesktopFrame({
-    required this.scaffoldKey,
-    required this.navigatorKey,
-    required this.observers,
-    required this.nowPlaying,
-    required this.onOpenNowPlaying,
-    required this.onCloseNowPlaying,
-  });
-
-  final GlobalKey<ScaffoldState> scaffoldKey;
-  final GlobalKey<NavigatorState> navigatorKey;
-  final List<NavigatorObserver> observers;
-  final bool nowPlaying;
-  final VoidCallback onOpenNowPlaying;
-  final VoidCallback onCloseNowPlaying;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final library = ref.watch(libraryProvider);
-    final narrow = MediaQuery.sizeOf(context).width < 900;
-    Widget sidebar(BuildContext context) => ColoredBox(
-      color: context.zero.surfaceMuted,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-            child: Text(
-              '零拍',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: context.zero.text,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text(
-              '曲库',
-              style: TextStyle(fontSize: 13, color: context.zero.muted),
-            ),
-          ),
-          Wrap(
-            children: [
-              IconButton(
-                key: const Key('library-refresh-sidebar'),
-                tooltip: '刷新歌单',
-                onPressed: library.refreshing
-                    ? null
-                    : () => refreshPlaylistNow(context, ref),
-                icon: library.refreshing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(AppIcons.refresh),
-              ),
-              IconButton(
-                tooltip: '下载管理',
-                icon: const Icon(AppIcons.download),
-                onPressed: () =>
-                    openFeature(context, '下载管理', const DownloadsBody()),
-              ),
-              IconButton(
-                tooltip: '曲库同步',
-                icon: const Icon(AppIcons.sync),
-                onPressed: () => openFeature(context, '曲库同步', const SyncBody()),
-              ),
-              LibraryTools(
-                playlist: library.playlists
-                    .where((p) => p.id == library.selectedPlaylistId)
-                    .firstOrNull,
-              ),
-              IconButton(
-                tooltip: '本地搜索',
-                icon: const Icon(AppIcons.localSearch),
-                onPressed: () => openFeature(
-                  context,
-                  '本地曲库搜索',
-                  LocalSearchBody(playlistId: library.selectedPlaylistId ?? ''),
-                ),
-              ),
-              IconButton(
-                tooltip: '发现与电台',
-                icon: const Icon(AppIcons.discover),
-                onPressed: () =>
-                    openFeature(context, '发现与电台', const BrowseRootsBody()),
-              ),
-              IconButton(
-                tooltip: '账号',
-                icon: const Icon(AppIcons.person),
-                onPressed: () =>
-                    openFeature(context, '账号', const AccountsBody()),
-              ),
-              IconButton(
-                tooltip: '设置',
-                icon: const Icon(AppIcons.settings),
-                onPressed: () =>
-                    openFeature(context, '设置', const SettingsBody()),
-              ),
-            ],
-          ),
-          Expanded(
-            child: ListView.builder(
-              key: const PageStorageKey('desktop-playlists'),
-              itemCount: library.playlists.length,
-              itemBuilder: (context, index) {
-                final playlist = library.playlists[index];
-                final selected = playlist.id == library.selectedPlaylistId;
-                return PlaylistRow(
-                  key: ValueKey('playlist-item-${playlist.id}'),
-                  playlist: playlist,
-                  selected: selected,
-                  onTap: () {
-                    if (narrow) scaffoldKey.currentState?.closeDrawer();
-                    navigatorKey.currentState?.popUntil(
-                      (route) => route.isFirst,
-                    );
-                    ref.read(searchProvider.notifier).clearResults();
-                    ref
-                        .read(libraryProvider.notifier)
-                        .selectPlaylist(playlist.id);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-    return FeatureNavigation(
-      navigatorKey: navigatorKey,
-      child: Builder(
-        builder: (context) => Scaffold(
-          key: scaffoldKey,
-          drawer: narrow ? Drawer(child: sidebar(context)) : null,
-          backgroundColor: context.zero.canvas,
-          endDrawer: Drawer(
-            width: 360,
-            backgroundColor: context.zero.surface,
-            child: QueuePanel(),
-          ),
-          body: Stack(
-            children: [
-              Column(
-                children: [
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (!narrow)
-                          SizedBox(width: 224, child: sidebar(context)),
-                        if (narrow)
-                          SizedBox(
-                            width: 56,
-                            child: Column(
-                              children: [
-                                IconButton(
-                                  tooltip: '展开曲库',
-                                  icon: const Icon(AppIcons.menu),
-                                  onPressed: () =>
-                                      scaffoldKey.currentState?.openDrawer(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        VerticalDivider(width: 1),
-                        Expanded(
-                          child: Navigator(
-                            key: navigatorKey,
-                            observers: observers,
-                            onGenerateRoute: (_) => MaterialPageRoute(
-                              builder: (context) => Consumer(
-                                builder: (context, ref, _) {
-                                  final search = ref.watch(searchProvider);
-                                  return search.submitted
-                                      ? ListView(
-                                          padding: const EdgeInsets.all(24),
-                                          children: [
-                                            SearchBox(),
-                                            SizedBox(height: 16),
-                                            SearchBody(),
-                                          ],
-                                        )
-                                      : Padding(
-                                          padding: EdgeInsets.all(24),
-                                          child: Column(
-                                            children: [
-                                              SearchBox(),
-                                              SizedBox(height: 16),
-                                              Expanded(child: LibraryPane()),
-                                            ],
-                                          ),
-                                        );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PlayerBar(
-                    onOpen: onOpenNowPlaying,
-                    onQueue: () => scaffoldKey.currentState?.openEndDrawer(),
-                  ),
-                ],
-              ),
-              if (nowPlaying)
-                Positioned.fill(
-                  child: Material(
-                    color: context.zero.canvas,
-                    child: Column(
-                      children: [
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            tooltip: '关闭',
-                            onPressed: onCloseNowPlaying,
-                            icon: Icon(AppIcons.close),
-                          ),
-                        ),
-                        Expanded(child: NowPlayingBody()),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 
