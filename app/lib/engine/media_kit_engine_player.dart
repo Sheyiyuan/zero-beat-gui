@@ -57,7 +57,17 @@ class MediaKitEnginePlayer implements EnginePlayer {
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
-  Future<void> setVolume(double percent) => _player.setVolume(percent);
+  Future<void> setVolume(double percent) async {
+    await _player.setVolume(percent);
+    // mpv marks the stream media.role=Music. WirePlumber restores that role's
+    // saved volume on top of the cubic softvol above. TUI sets its stream to
+    // unity and applies the slider in PCM, so leave the mixer at 100% too.
+    final platform = _player.platform;
+    if (platform is! NativePlayer) return;
+    try {
+      await platform.setProperty('ao-volume', '100');
+    } catch (_) {}
+  }
 
   @override
   Future<bool> trySetFilter(String filter) async {
