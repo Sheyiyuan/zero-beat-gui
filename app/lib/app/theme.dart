@@ -44,6 +44,12 @@ extension ZeroThemeContext on BuildContext {
   ZeroPalette get zero => ZeroPalette(Theme.of(this).colorScheme);
 }
 
+ThemeMode zeroThemeMode(String theme) => switch (theme) {
+  'dark' => ThemeMode.dark,
+  'light' => ThemeMode.light,
+  _ => ThemeMode.system,
+};
+
 ThemeData buildZeroTheme({
   Brightness brightness = Brightness.light,
   String palette = 'zero-red',

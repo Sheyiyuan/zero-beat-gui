@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/startup_appearance.dart';
 import '../features/session.dart';
 import 'developer_log_collectors.dart';
 import 'providers.dart';
@@ -22,6 +23,16 @@ class ZeroBeatApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(guiSettingsProvider);
+    ref.listen(
+      guiSettingsProvider.select(
+        (s) => StartupAppearance(
+          theme: s.theme,
+          palette: s.palette,
+          accent: s.accent,
+        ),
+      ),
+      (_, next) => next.save(),
+    );
     return MaterialApp(
       title: '零拍',
       debugShowCheckedModeBanner: false,
@@ -31,11 +42,7 @@ class ZeroBeatApp extends ConsumerWidget {
         palette: settings.palette,
         accent: settings.accent,
       ),
-      themeMode: settings.theme == 'dark'
-          ? ThemeMode.dark
-          : settings.theme == 'light'
-          ? ThemeMode.light
-          : ThemeMode.system,
+      themeMode: zeroThemeMode(settings.theme),
       builder: (context, child) {
         final gated = HapticTapListener(
           enabled: settings.haptics,

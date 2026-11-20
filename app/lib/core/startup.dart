@@ -6,27 +6,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/layout.dart';
 import '../app/providers.dart';
-import '../app/theme.dart';
 import '../app/zero_beat_app.dart';
 import '../platform/desktop_window.dart';
-import '../platform/window_frame.dart';
 import 'bootstrap.dart';
 import 'developer_log.dart';
+import 'startup_appearance.dart';
+import 'startup_splash.dart';
 
 class CoreStartup extends StatefulWidget {
-  const CoreStartup({super.key});
+  const CoreStartup({this.appearance = const StartupAppearance(), super.key});
+
+  final StartupAppearance appearance;
 
   @override
   State<CoreStartup> createState() => _CoreStartupState();
 }
 
 class _CoreStartupState extends State<CoreStartup> {
-  late Future<StartedCore> _future;
+  StartedCore? _started;
+  Object? _error;
+  bool _splash = true;
+  bool _intro = true;
+  int _attempt = 0;
 
   @override
   void initState() {
     super.initState();
-    _future = _start();
+    _track(_start());
+  }
+
+  void _track(Future<StartedCore> future) {
+    final attempt = ++_attempt;
+    future.then(
+      (started) {
+        if (mounted && attempt == _attempt) {
+          setState(() => _started = started);
+        }
+      },
+      onError: (Object error) {
+        if (mounted && attempt == _attempt) setState(() => _error = error);
+      },
+    );
   }
 
   Future<StartedCore> _start() async {
@@ -57,55 +77,43 @@ class _CoreStartupState extends State<CoreStartup> {
 
   void _retry() {
     setState(() {
-      _future = CoreRuntime.instance.ensureStarted();
+      _started = null;
+      _error = null;
+      _splash = true;
+      _intro = false;
     });
+    _track(CoreRuntime.instance.ensureStarted());
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<StartedCore>(
-      future: _future,
-      builder: (context, snapshot) {
-        final started = snapshot.data;
-        if (snapshot.connectionState == ConnectionState.done &&
-            started != null) {
-          return _scope(started);
-        }
-        if (snapshot.hasError) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: buildZeroTheme(),
-            builder: (context, child) => DesktopWindow.installed
-                ? ZeroWindowFrame(child: child!)
-                : child!,
-            home: Scaffold(
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '无法连接播放服务\n${snapshot.error}',
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton(onPressed: _retry, child: const Text('重试')),
-                    ],
-                  ),
+    final started = _started;
+    // The app mounts under the splash as soon as the core is ready, so the
+    // fade-out reveals a page that is already laid out.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (started != null) _scope(started),
+          if (_splash)
+            ExcludeFocus(
+              key: const ValueKey('startup-splash'),
+              excluding: started != null,
+              child: IgnorePointer(
+                ignoring: started != null,
+                child: StartupSplash(
+                  appearance: widget.appearance,
+                  ready: started != null,
+                  intro: _intro,
+                  error: _error?.toString(),
+                  onRetry: _retry,
+                  onExited: () => setState(() => _splash = false),
                 ),
               ),
             ),
-          );
-        }
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: buildZeroTheme(),
-          builder: (context, child) =>
-              DesktopWindow.installed ? ZeroWindowFrame(child: child!) : child!,
-          home: const Scaffold(body: Center(child: Text('正在连接播放服务'))),
-        );
-      },
+        ],
+      ),
     );
   }
 
